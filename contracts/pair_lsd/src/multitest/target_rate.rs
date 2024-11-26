@@ -189,8 +189,8 @@ fn provide_liquidity_multiple() {
 
     // each provides liquidity according to their share
     for (provider, share) in &providers {
-        let juno_amt = total_lsd * target_rate * *share;
-        let wy_juno_amt = total_lsd * *share;
+        let juno_amt = total_lsd.mul_floor(target_rate * *share);
+        let wy_juno_amt = total_lsd.mul_floor(*share);
 
         // mint wyJUNO tokens and increase allowance for LP contract
         suite
@@ -257,12 +257,12 @@ fn provide_liquidity_multiple() {
         // should have received back their share of the pool
         assert_approx_eq!(
             suite.query_balance(provider, "juno").unwrap().into(),
-            total_lsd * target_rate * share,
+            total_lsd.mul_floor(target_rate * share),
             "0.000000000001"
         );
         assert_approx_eq!(
             suite.query_cw20_balance(provider, &wy_juno).unwrap().into(),
-            total_lsd * share,
+            total_lsd.mul_floor(share),
             "0.000000000001"
         );
     }
@@ -385,7 +385,7 @@ fn changing_target_rate() {
             .unwrap();
         assert_approx_eq!(
             sim.return_amount,
-            Uint128::from(100_000u128) * target_rate,
+            Uint128::from(100_000u128).mul_floor(target_rate),
             "0.0001"
         );
     }
@@ -409,7 +409,6 @@ fn changing_target_rate() {
 
     let min_target_rate = Decimal::from_str("1.4").unwrap();
     let target_rate_step = Decimal::from_str("0.1").unwrap();
-    let mut target_rate = target_rate;
     while target_rate > min_target_rate {
         // change target rate and wait for cache to expire
         target_rate -= target_rate_step;
@@ -680,7 +679,7 @@ fn predict_swap_spot_price() {
         .unwrap();
     // this is within 0.01%
     assert_approx_eq!(
-        spot * Uint128::new(1_000_000),
+        Uint128::new(1_000_000).mul_floor(spot),
         Uint128::new(666666),
         "0.0001"
     );
@@ -742,8 +741,8 @@ fn predict_swap_spot_price() {
         .unwrap();
     // this is within 0.01%
     assert_approx_eq!(
-        spot * Uint128::new(1_000_000),
-        target * Uint128::new(1_000_000),
+        Uint128::new(1_000_000).mul_floor(spot),
+        Uint128::new(1_000_000).mul_floor(target),
         "0.0001"
     );
 }
@@ -769,10 +768,12 @@ pub fn arbitrage_to(
             .query_simulation(pair, offer_asset.with_balance(amount), None)
             .unwrap();
 
-        if amount < MAX_AMT || (sim.return_amount + sim.commission_amount) * target_rate == amount {
+        if amount < MAX_AMT
+            || (sim.return_amount + sim.commission_amount).mul_floor(target_rate) == amount
+        {
             break;
         }
-        if (sim.return_amount + sim.commission_amount) * target_rate <= amount {
+        if (sim.return_amount + sim.commission_amount).mul_floor(target_rate) <= amount {
             amount /= TEN;
             continue;
         }

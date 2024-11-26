@@ -2,9 +2,9 @@ use cosmwasm_std::{
     attr, entry_point, from_json, to_json_binary, Addr, Binary, CosmosMsg, Decimal, Deps, DepsMut,
     Env, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, WasmMsg,
 };
+use cw2::ensure_from_older_version;
 use cw2::set_contract_version;
 use cw20::Cw20ReceiveMsg;
-use cw_utils::ensure_from_older_version;
 
 use wyndex::asset::{addr_opt_validate, Asset, AssetInfo};
 use wyndex::common::{
@@ -545,6 +545,7 @@ pub fn execute_create_pair(
         .into(),
         gas_limit: None,
         reply_on: ReplyOn::Success,
+        payload: Binary::new(vec![]),
     }];
 
     Ok(Response::new()
@@ -585,9 +586,19 @@ fn execute_mark_pairs_as_migrated(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
     // parse the reply
-    let res = cw_utils::parse_reply_instantiate_data(msg).map_err(|_| {
-        StdError::parse_err("MsgInstantiateContractResponse", "failed to parse data")
-    })?;
+
+    let result = msg.result.into_result().map_err(StdError::generic_err)?;
+    let res = cw_utils::parse_instantiate_response_data(
+        result
+            .msg_responses
+            .get(0)
+            .cloned()
+            .map(|v| v.value)
+            .or(result.data)
+            .unwrap()
+            .as_slice(),
+    )
+    .map_err(|_| StdError::parse_err("MsgInstantiateContractResponse", "failed to parse data"))?;
 
     reply::instantiate_pair(deps, env, res)
 }

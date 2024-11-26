@@ -29,7 +29,7 @@ cosmwasm-std = { workspace = true }
 cosmwasm-schema = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
-wynd-curve-utils = { workspace = true }
+# wynd-curve-utils = { workspace = true }
 
 [dev-dependencies]
 # cw-plus

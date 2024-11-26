@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use serde::{Deserialize, Serialize};
-use wynd_curve_utils::Curve;
+use wyndex::utils::Curve;
 
 use crate::{utils::calc_power, ContractError};
 use cosmwasm_std::{Addr, Decimal, Env, OverflowError, StdResult, Storage, Timestamp, Uint128};
@@ -343,8 +343,6 @@ mod tests {
             err,
             OverflowError {
                 operation: OverflowOperation::Sub,
-                operand1: "1000".to_string(),
-                operand2: "2000".to_string()
             }
         );
         // But releasing the unlocked tokens passes

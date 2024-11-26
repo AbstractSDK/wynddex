@@ -136,8 +136,8 @@ fn instantiate_pair(router: &mut App, owner: &Addr) -> Addr {
         .wrap()
         .query_wasm_smart(pair.clone(), &QueryMsg::Pair {})
         .unwrap();
-    assert_eq!("contract1", res.contract_addr);
-    assert_eq!("contract2", res.liquidity_token);
+    assert_eq!("contract1", res.contract_addr.as_str());
+    assert_eq!("contract2", res.liquidity_token.as_str());
 
     pair
 }

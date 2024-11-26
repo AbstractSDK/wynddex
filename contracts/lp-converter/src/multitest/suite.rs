@@ -10,7 +10,10 @@ use cosmwasm_std::{
     testing::mock_env, to_json_binary, Addr, Coin, Decimal, Empty, StdResult, Uint128, Validator,
 };
 use cw20::{BalanceResponse, Cw20ExecuteMsg, Cw20QueryMsg};
-use cw_multi_test::{App, AppResponse, Contract, ContractWrapper, Executor, StakingInfo};
+use cw_multi_test::{
+    no_init, App, AppBuilder, AppResponse, Contract, ContractWrapper, Executor, StakeKeeper,
+    StakingInfo,
+};
 use wynd_lsd_hub::msg::{ConfigResponse, TokenInitInfo};
 use wyndex::{
     asset::{Asset, AssetInfo, AssetInfoExt},
@@ -143,7 +146,9 @@ impl SuiteBuilder {
 
     #[track_caller]
     pub fn build(self) -> Suite {
-        let mut app = App::default();
+        let mut app = AppBuilder::new()
+            .with_staking(StakeKeeper::default())
+            .build(no_init);
         let owner = Addr::unchecked("owner");
         // provide initial native balances
         app.init_modules(|router, api, storage| {
@@ -180,12 +185,12 @@ impl SuiteBuilder {
                     api,
                     storage,
                     &mock_env().block,
-                    Validator {
-                        address: "testvaloper1".to_string(),
-                        commission: Decimal::percent(5),
-                        max_commission: Decimal::one(),
-                        max_change_rate: Decimal::one(),
-                    },
+                    Validator::new(
+                        "testvaloper1".to_string(),
+                        Decimal::percent(5),
+                        Decimal::one(),
+                        Decimal::one(),
+                    ),
                 )
                 .unwrap();
         });

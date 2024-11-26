@@ -1,6 +1,6 @@
 use anyhow::Result as AnyResult;
 
-use cosmwasm_std::{coin, to_json_binary, Addr, Coin, CosmosMsg, Decimal, Uint128};
+use cosmwasm_std::{coin, to_binary, Addr, Coin, CosmosMsg, Decimal, Uint128};
 use cw20::{BalanceResponse, Cw20ExecuteMsg, Cw20QueryMsg, MinterResponse};
 use cw20_base::msg::InstantiateMsg as Cw20BaseInstantiateMsg;
 use cw_multi_test::{App, AppResponse, BankSudo, ContractWrapper, Executor, SudoMsg};
@@ -153,7 +153,7 @@ impl SuiteBuilder {
     #[track_caller]
     pub fn build(mut self) -> Suite {
         let mut app = App::default();
-        let owner = Addr::unchecked("owner");
+        let owner = app.api().addr_make("owner");
 
         let cw20_code_id = store_cw20(&mut app);
         let pair_code_id = store_pair(&mut app);
@@ -398,7 +398,8 @@ impl Suite {
         native_tokens: Vec<Coin>,
     ) -> AnyResult<PairContract> {
         let owner = self.owner.clone();
-        let whale = "whale";
+        let whale = self.app.api().addr_make("whale");
+        let whale = whale.as_str();
 
         let pair = self.create_pair(
             &owner,
@@ -621,7 +622,7 @@ impl StakingContract {
             &Cw20ExecuteMsg::Send {
                 contract: self.0.to_string(),
                 amount: amount.into(),
-                msg: to_json_binary(&ReceiveMsg::Delegate {
+                msg: to_binary(&ReceiveMsg::Delegate {
                     unbonding_period,
                     delegate_as: None,
                 })

@@ -13,6 +13,7 @@ use wyndex::asset::{addr_opt_validate, AssetInfo, AssetInfoValidated};
 use wyndex::common::validate_addresses;
 use wyndex::lp_converter::ExecuteMsg as ConverterExecuteMsg;
 use wyndex::stake::{FundingInfo, InstantiateMsg, ReceiveMsg, UnbondingPeriod};
+use wyndex::utils::Curve;
 
 use crate::distribution::{
     apply_points_correction, execute_delegate_withdrawal, execute_distribute_rewards,
@@ -34,7 +35,6 @@ use crate::state::{
     Config, ConverterConfig, Distribution, TokenInfo, TotalStake, ADMIN, CLAIMS, CONFIG,
     DISTRIBUTION, REWARD_CURVE, STAKE, TOTAL_PER_PERIOD, TOTAL_STAKED, UNBOND_ALL,
 };
-use wynd_curve_utils::Curve;
 
 const SECONDS_PER_YEAR: u64 = 365 * 24 * 60 * 60;
 

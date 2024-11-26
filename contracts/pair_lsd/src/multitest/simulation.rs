@@ -297,7 +297,7 @@ fn compare_to_uniswap(
     // calculate slippage as: expected amount minus actual amount
     let swap_output = sim.return_amount + sim.commission_amount;
     let juno_wy_juno_slippage =
-        Uint128::new(trade_volume).saturating_sub(swap_output * actual_target_rate);
+        Uint128::new(trade_volume).saturating_sub(swap_output.mul_floor(actual_target_rate));
 
     let sim = suite
         .query_simulation(
@@ -309,7 +309,7 @@ fn compare_to_uniswap(
     // calculate slippage as: expected amount minus actual amount
     let xyk_swap_output = sim.return_amount + sim.commission_amount;
     let xyk_juno_wy_juno_slippage =
-        Uint128::new(trade_volume).saturating_sub(xyk_swap_output * actual_target_rate);
+        Uint128::new(trade_volume).saturating_sub(xyk_swap_output.mul_floor(actual_target_rate));
 
     let sim = suite
         .query_simulation(
@@ -320,7 +320,7 @@ fn compare_to_uniswap(
         .unwrap();
     // calculate slippage as: expected amount minus actual amount
     // we expect to receive the fair market price, which is `actual_target_rate`
-    let optimal_output = Uint128::new(trade_volume) * actual_target_rate;
+    let optimal_output = Uint128::new(trade_volume).mul_floor(actual_target_rate);
     let stable_swap_output = sim.return_amount + sim.commission_amount;
     let stable_slippage = optimal_output.saturating_sub(stable_swap_output);
 

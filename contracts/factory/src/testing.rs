@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    attr, from_json, to_json_binary, Addr, Decimal, ReplyOn, SubMsg, Uint128, WasmMsg,
+    attr, from_json, to_json_binary, Addr, Binary, Decimal, ReplyOn, SubMsg, Uint128, WasmMsg,
 };
 use cw_utils::MsgInstantiateContractResponse;
 use wyndex::fee_config::FeeConfig;
@@ -233,11 +233,8 @@ fn update_config() {
     let query_res = query(deps.as_ref(), env, QueryMsg::Config {}).unwrap();
     let config_res: ConfigResponse = from_json(&query_res).unwrap();
     assert_eq!(200u64, config_res.token_code_id);
-    assert_eq!(owner, config_res.owner);
-    assert_eq!(
-        String::from("new_fee_addr"),
-        config_res.fee_address.unwrap()
-    );
+    assert_eq!(owner, config_res.owner.as_str());
+    assert_eq!("new_fee_addr", config_res.fee_address.unwrap().as_str());
 
     // Unauthorized err
     let env = mock_env();
@@ -329,7 +326,7 @@ fn update_owner() {
     // Let's query the state
     let config: ConfigResponse =
         from_json(&query(deps.as_ref(), env, QueryMsg::Config {}).unwrap()).unwrap();
-    assert_eq!(new_owner, config.owner);
+    assert_eq!(new_owner, config.owner.as_str());
 }
 
 #[test]
@@ -545,7 +542,8 @@ fn create_pair() {
             .into(),
             id: 1,
             gas_limit: None,
-            reply_on: ReplyOn::Success
+            reply_on: ReplyOn::Success,
+            payload: Binary::new(vec![])
         }]
     );
 }

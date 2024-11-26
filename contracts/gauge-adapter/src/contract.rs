@@ -84,7 +84,9 @@ pub fn query(deps: Deps, env: Env, msg: AdapterQueryMsg) -> StdResult<Binary> {
     match msg {
         AdapterQueryMsg::Config {} => to_json_binary(&CONFIG.load(deps.storage)?),
         AdapterQueryMsg::AllOptions {} => to_json_binary(&query::all_options(deps)?),
-        AdapterQueryMsg::CheckOption { option } => to_json_binary(&query::check_option(deps, option)?),
+        AdapterQueryMsg::CheckOption { option } => {
+            to_json_binary(&query::check_option(deps, option)?)
+        }
         AdapterQueryMsg::SampleGaugeMsgs { selected } => {
             to_json_binary(&query::sample_gauge_msgs(deps, env, selected)?)
         }
@@ -138,7 +140,7 @@ mod query {
                 .flat_map(|(option, weight)| {
                     let rewards_asset = AssetValidated {
                         info: rewards_asset.info.clone(),
-                        amount: rewards_asset.amount * weight,
+                        amount: rewards_asset.amount.mul_floor(weight),
                     };
                     create_distribute_msgs(&env, rewards_asset, option, distribution_duration)
                         .unwrap()
@@ -203,7 +205,7 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, Con
             let contract_info = deps
                 .querier
                 .query_wasm_contract_info(env.contract.address.clone())?;
-            let sender = deps.api.addr_validate(&contract_info.admin.unwrap())?;
+            let sender = contract_info.admin.unwrap();
 
             instantiate(
                 deps,
@@ -273,7 +275,7 @@ mod tests {
 
         // check if the config is stored
         let config = CONFIG.load(deps.as_ref().storage).unwrap();
-        assert_eq!(config.factory, "factory");
+        assert_eq!(config.factory.as_str(), "factory");
         assert_eq!(
             config.rewards_asset.info,
             wyndex::asset::AssetInfoValidated::Native("juno".to_string())

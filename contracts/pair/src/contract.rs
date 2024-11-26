@@ -837,7 +837,7 @@ pub fn calculate_protocol_fee(
     commission_amount: Uint128,
     protocol_commission_rate: Decimal,
 ) -> Option<AssetValidated> {
-    let protocol_fee: Uint128 = commission_amount * protocol_commission_rate;
+    let protocol_fee: Uint128 = commission_amount.mul_floor(protocol_commission_rate);
     if protocol_fee.is_zero() {
         return None;
     }
@@ -1128,12 +1128,12 @@ pub fn compute_swap(
     let cp: Uint256 = offer_pool * ask_pool;
     let return_amount: Uint256 = (Decimal256::from_ratio(ask_pool, 1u8)
         - Decimal256::from_ratio(cp, offer_pool + offer_amount))
-        * Uint256::from(1u8);
+    .to_uint_floor();
 
     // Calculate spread & commission
     let spread_amount: Uint256 =
-        (offer_amount * Decimal256::from_ratio(ask_pool, offer_pool)) - return_amount;
-    let commission_amount: Uint256 = return_amount * commission_rate;
+        (offer_amount.mul_floor(Decimal256::from_ratio(ask_pool, offer_pool))) - return_amount;
+    let commission_amount: Uint256 = return_amount.mul_floor(commission_rate);
 
     // The commision (minus the part that goes to the protocol) will be absorbed by the pool
     let return_amount: Uint256 = return_amount - commission_amount;
@@ -1170,19 +1170,18 @@ pub fn compute_offer_amount(
     let offer_amount: Uint128 = cp
         .multiply_ratio(
             Uint256::from(1u8),
-            Uint256::from(
-                ask_pool.checked_sub(
-                    (Uint256::from(ask_amount) * inv_one_minus_commission).try_into()?,
-                )?,
-            ),
+            Uint256::from(ask_pool.checked_sub(
+                (Uint256::from(ask_amount).mul_floor(inv_one_minus_commission)).try_into()?,
+            )?),
         )
         .checked_sub(offer_pool.into())?
         .try_into()?;
 
-    let before_commission_deduction = Uint256::from(ask_amount) * inv_one_minus_commission;
-    let spread_amount = (offer_amount * Decimal::from_ratio(ask_pool, offer_pool))
+    let before_commission_deduction = Uint256::from(ask_amount).mul_floor(inv_one_minus_commission);
+    let spread_amount = (offer_amount.mul_floor(Decimal::from_ratio(ask_pool, offer_pool)))
         .saturating_sub(before_commission_deduction.try_into()?);
-    let commission_amount = before_commission_deduction * decimal2decimal256(commission_rate)?;
+    let commission_amount =
+        before_commission_deduction.mul_floor(decimal2decimal256(commission_rate)?);
     Ok((offer_amount, spread_amount, commission_amount.try_into()?))
 }
 

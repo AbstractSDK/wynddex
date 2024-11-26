@@ -211,36 +211,57 @@ mod tests {
     #[test]
     fn validate_config() {
         let deps = mock_dependencies();
-        let addresses = vec![("address1".to_owned(), Decimal::one())];
+        let addresses = vec![(deps.api.addr_make("address1").to_string(), Decimal::one())];
         assert_eq!(
             validate_addresses(deps.as_ref(), addresses).unwrap(),
-            vec![(Addr::unchecked("address1".to_owned()), Decimal::one())]
+            vec![(deps.api.addr_make("address1"), Decimal::one())]
         );
 
         let addresses = vec![
-            ("address1".to_owned(), Decimal::percent(50)),
-            ("address2".to_owned(), Decimal::percent(25)),
-            ("address3".to_owned(), Decimal::percent(25)),
+            (
+                deps.api.addr_make("address1").to_string(),
+                Decimal::percent(50),
+            ),
+            (
+                deps.api.addr_make("address2").to_string(),
+                Decimal::percent(25),
+            ),
+            (
+                deps.api.addr_make("address3").to_string(),
+                Decimal::percent(25),
+            ),
         ];
         assert_eq!(
             validate_addresses(deps.as_ref(), addresses).unwrap(),
             vec![
-                (Addr::unchecked("address1".to_owned()), Decimal::percent(50)),
-                (Addr::unchecked("address2".to_owned()), Decimal::percent(25)),
-                (Addr::unchecked("address3".to_owned()), Decimal::percent(25))
+                (deps.api.addr_make("address1"), Decimal::percent(50)),
+                (deps.api.addr_make("address2"), Decimal::percent(25)),
+                (deps.api.addr_make("address3"), Decimal::percent(25))
             ]
         );
 
-        let addresses = vec![("address1".to_owned(), Decimal::percent(101))];
+        let addresses = vec![(
+            deps.api.addr_make("address1").to_string(),
+            Decimal::percent(101),
+        )];
         assert_eq!(
             validate_addresses(deps.as_ref(), addresses).unwrap_err(),
             ContractError::InvalidMsg {}
         );
 
         let addresses = vec![
-            ("address1".to_owned(), Decimal::percent(50)),
-            ("address2".to_owned(), Decimal::percent(25)),
-            ("address3".to_owned(), Decimal::percent(26)),
+            (
+                deps.api.addr_make("address1").to_string(),
+                Decimal::percent(50),
+            ),
+            (
+                deps.api.addr_make("address2").to_string(),
+                Decimal::percent(25),
+            ),
+            (
+                deps.api.addr_make("address3").to_string(),
+                Decimal::percent(26),
+            ),
         ];
         assert_eq!(
             validate_addresses(deps.as_ref(), addresses).unwrap_err(),
@@ -248,9 +269,18 @@ mod tests {
         );
 
         let addresses = vec![
-            ("address1".to_owned(), Decimal::percent(50)),
-            ("address2".to_owned(), Decimal::percent(25)),
-            ("address3".to_owned(), Decimal::percent(24)),
+            (
+                deps.api.addr_make("address1").to_string(),
+                Decimal::percent(50),
+            ),
+            (
+                deps.api.addr_make("address2").to_string(),
+                Decimal::percent(25),
+            ),
+            (
+                deps.api.addr_make("address3").to_string(),
+                Decimal::percent(24),
+            ),
         ];
         assert_eq!(
             validate_addresses(deps.as_ref(), addresses).unwrap_err(),
@@ -275,9 +305,9 @@ mod tests {
         let splitter_contract = app
             .instantiate_contract(
                 splitter_code_id,
-                Addr::unchecked("owner"),
+                app.api().addr_make("owner"),
                 &InstantiateMsg {
-                    addresses: vec![("address1".to_owned(), Decimal::one())],
+                    addresses: vec![(app.api().addr_make("address1").to_string(), Decimal::one())],
                     cw20_contracts: vec![],
                 },
                 &[],
@@ -290,7 +320,7 @@ mod tests {
         // it will succeed, but won't do anything
         // (this tests again trying to send 0 amount)
         app.execute_contract(
-            Addr::unchecked("owner"),
+            app.api().addr_make("owner"),
             splitter_contract,
             &ExecuteMsg::SendTokens {
                 native_denoms: vec!["ujuno".to_owned()],
@@ -303,12 +333,12 @@ mod tests {
 
     #[test]
     fn split_tokens() {
-        let mut app = App::new(|router, _, storage| {
+        let mut app = App::new(|router, api, storage| {
             router
                 .bank
                 .init_balance(
                     storage,
-                    &Addr::unchecked("owner"),
+                    &api.addr_make("owner"),
                     vec![coin(1_000_000, "ujuno")],
                 )
                 .unwrap()
@@ -318,12 +348,21 @@ mod tests {
         let splitter_contract = app
             .instantiate_contract(
                 splitter_code_id,
-                Addr::unchecked("owner"),
+                app.api().addr_make("owner"),
                 &InstantiateMsg {
                     addresses: vec![
-                        ("address1".to_owned(), Decimal::percent(50)),
-                        ("address2".to_owned(), Decimal::percent(25)),
-                        ("address3".to_owned(), Decimal::percent(25)),
+                        (
+                            app.api().addr_make("address1").to_string(),
+                            Decimal::percent(50),
+                        ),
+                        (
+                            app.api().addr_make("address2").to_string(),
+                            Decimal::percent(25),
+                        ),
+                        (
+                            app.api().addr_make("address3").to_string(),
+                            Decimal::percent(25),
+                        ),
                     ],
                     cw20_contracts: vec![],
                 },
@@ -335,7 +374,7 @@ mod tests {
 
         // first send tokens to contract
         app.execute(
-            Addr::unchecked("owner"),
+            app.api().addr_make("owner"),
             BankMsg::Send {
                 to_address: splitter_contract.to_string(),
                 amount: vec![coin(1_000_000, "ujuno")],
@@ -346,7 +385,7 @@ mod tests {
 
         // execute message which sends tokens according to configuration
         app.execute_contract(
-            Addr::unchecked("owner"),
+            app.api().addr_make("owner"),
             splitter_contract,
             &ExecuteMsg::SendTokens {
                 native_denoms: vec!["ujuno".to_owned()],
@@ -358,7 +397,10 @@ mod tests {
 
         assert_eq!(
             app.wrap()
-                .query_balance("address1".to_owned(), "ujuno".to_owned())
+                .query_balance(
+                    app.api().addr_make("address1").to_owned(),
+                    "ujuno".to_owned()
+                )
                 .unwrap()
                 .amount
                 .u128(),
@@ -366,7 +408,10 @@ mod tests {
         );
         assert_eq!(
             app.wrap()
-                .query_balance("address2".to_owned(), "ujuno".to_owned())
+                .query_balance(
+                    app.api().addr_make("address2").to_string(),
+                    "ujuno".to_owned()
+                )
                 .unwrap()
                 .amount
                 .u128(),
@@ -374,7 +419,10 @@ mod tests {
         );
         assert_eq!(
             app.wrap()
-                .query_balance("address3".to_owned(), "ujuno".to_owned())
+                .query_balance(
+                    app.api().addr_make("address3").to_string(),
+                    "ujuno".to_owned()
+                )
                 .unwrap()
                 .amount
                 .u128(),
@@ -384,12 +432,12 @@ mod tests {
 
     #[test]
     fn split_tokens_multiple_denoms() {
-        let mut app = App::new(|router, _, storage| {
+        let mut app = App::new(|router, api, storage| {
             router
                 .bank
                 .init_balance(
                     storage,
-                    &Addr::unchecked("owner"),
+                    &api.addr_make("owner"),
                     vec![coin(1_000_000, "ujuno"), coin(200_000, "wynd")],
                 )
                 .unwrap()
@@ -399,11 +447,17 @@ mod tests {
         let splitter_contract = app
             .instantiate_contract(
                 splitter_code_id,
-                Addr::unchecked("owner"),
+                app.api().addr_make("owner"),
                 &InstantiateMsg {
                     addresses: vec![
-                        ("address1".to_owned(), Decimal::percent(33)),
-                        ("address2".to_owned(), Decimal::percent(67)),
+                        (
+                            app.api().addr_make("address1").to_string(),
+                            Decimal::percent(33),
+                        ),
+                        (
+                            app.api().addr_make("address2").to_string(),
+                            Decimal::percent(67),
+                        ),
                     ],
                     cw20_contracts: vec![],
                 },
@@ -415,7 +469,7 @@ mod tests {
 
         // first send tokens to contract
         app.execute(
-            Addr::unchecked("owner"),
+            app.api().addr_make("owner"),
             BankMsg::Send {
                 to_address: splitter_contract.to_string(),
                 amount: vec![coin(1_000_000, "ujuno")],
@@ -424,7 +478,7 @@ mod tests {
         )
         .unwrap();
         app.execute(
-            Addr::unchecked("owner"),
+            app.api().addr_make("owner"),
             BankMsg::Send {
                 to_address: splitter_contract.to_string(),
                 amount: vec![coin(200_000, "wynd")],
@@ -435,7 +489,7 @@ mod tests {
 
         // execute message which sends tokens according to configuration
         app.execute_contract(
-            Addr::unchecked("owner"),
+            app.api().addr_make("owner"),
             splitter_contract,
             &ExecuteMsg::SendTokens {
                 native_denoms: vec!["ujuno".to_owned(), "wynd".to_owned()],
@@ -447,13 +501,13 @@ mod tests {
 
         assert_eq!(
             app.wrap()
-                .query_all_balances("address1".to_owned())
+                .query_all_balances(app.api().addr_make("address1").to_owned())
                 .unwrap(),
             vec![coin(330_000u128, "ujuno"), coin(66_000u128, "wynd")]
         );
         assert_eq!(
             app.wrap()
-                .query_all_balances("address2".to_owned())
+                .query_all_balances(app.api().addr_make("address2").to_string())
                 .unwrap(),
             vec![coin(670_000u128, "ujuno"), coin(134_000u128, "wynd")]
         );
@@ -461,12 +515,12 @@ mod tests {
 
     #[test]
     fn split_tokens_specified_in_message() {
-        let mut app = App::new(|router, _, storage| {
+        let mut app = App::new(|router, api, storage| {
             router
                 .bank
                 .init_balance(
                     storage,
-                    &Addr::unchecked("owner"),
+                    &api.addr_make("owner"),
                     vec![coin(1_000_000, "ujuno"), coin(200_000, "wynd")],
                 )
                 .unwrap()
@@ -476,11 +530,17 @@ mod tests {
         let splitter_contract = app
             .instantiate_contract(
                 splitter_code_id,
-                Addr::unchecked("owner"),
+                app.api().addr_make("owner"),
                 &InstantiateMsg {
                     addresses: vec![
-                        ("address1".to_owned(), Decimal::percent(33)),
-                        ("address2".to_owned(), Decimal::percent(67)),
+                        (
+                            app.api().addr_make("address1").to_string(),
+                            Decimal::percent(33),
+                        ),
+                        (
+                            app.api().addr_make("address2").to_string(),
+                            Decimal::percent(67),
+                        ),
                     ],
                     cw20_contracts: vec![],
                 },
@@ -492,7 +552,7 @@ mod tests {
 
         // first send tokens to contract
         app.execute(
-            Addr::unchecked("owner"),
+            app.api().addr_make("owner"),
             BankMsg::Send {
                 to_address: splitter_contract.to_string(),
                 amount: vec![coin(1_000_000, "ujuno")],
@@ -501,7 +561,7 @@ mod tests {
         )
         .unwrap();
         app.execute(
-            Addr::unchecked("owner"),
+            app.api().addr_make("owner"),
             BankMsg::Send {
                 to_address: splitter_contract.to_string(),
                 amount: vec![coin(200_000, "wynd")],
@@ -511,7 +571,7 @@ mod tests {
         .unwrap();
 
         app.execute_contract(
-            Addr::unchecked("owner"),
+            app.api().addr_make("owner"),
             splitter_contract.clone(),
             &ExecuteMsg::SendTokens {
                 native_denoms: vec!["wynd".to_owned()],
@@ -523,13 +583,13 @@ mod tests {
 
         assert_eq!(
             app.wrap()
-                .query_all_balances("address1".to_owned())
+                .query_all_balances(app.api().addr_make("address1").to_owned())
                 .unwrap(),
             vec![coin(66_000u128, "wynd")]
         );
         assert_eq!(
             app.wrap()
-                .query_all_balances("address2".to_owned())
+                .query_all_balances(app.api().addr_make("address2").to_string())
                 .unwrap(),
             vec![coin(134_000u128, "wynd")]
         );
@@ -550,11 +610,17 @@ mod tests {
         let splitter_contract = app
             .instantiate_contract(
                 splitter_code_id,
-                Addr::unchecked("owner"),
+                app.api().addr_make("owner"),
                 &InstantiateMsg {
                     addresses: vec![
-                        ("address1".to_owned(), Decimal::percent(33)),
-                        ("address2".to_owned(), Decimal::percent(67)),
+                        (
+                            app.api().addr_make("address1").to_string(),
+                            Decimal::percent(33),
+                        ),
+                        (
+                            app.api().addr_make("address2").to_string(),
+                            Decimal::percent(67),
+                        ),
                     ],
                     cw20_contracts: vec![],
                 },
@@ -567,11 +633,11 @@ mod tests {
         // Specify tokens that splitter has no balances
         // Execute message won't fail
         app.execute_contract(
-            Addr::unchecked("owner"),
+            app.api().addr_make("owner"),
             splitter_contract,
             &ExecuteMsg::SendTokens {
                 native_denoms: vec!["some_token".to_owned()],
-                cw20_addresses: Some(vec!["someaddress".to_owned()]),
+                cw20_addresses: Some(vec![app.api().addr_make("someaddress").to_string()]),
             },
             &[],
         )
@@ -605,13 +671,13 @@ mod tests {
         ) -> Addr {
             app.instantiate_contract(
                 token_code,
-                Addr::unchecked(owner),
+                app.api().addr_make(owner),
                 &Cw20BaseInstantiateMsg {
                     symbol: name.to_owned(),
                     name: name.to_owned(),
                     decimals,
                     initial_balances: vec![Cw20Coin {
-                        address: owner.into(),
+                        address: app.api().addr_make(owner).to_string(),
                         amount: Uint128::from(init_balance),
                     }],
                     mint: None,
@@ -656,9 +722,12 @@ mod tests {
             let splitter_contract = app
                 .instantiate_contract(
                     splitter_code_id,
-                    Addr::unchecked("owner"),
+                    app.api().addr_make("owner"),
                     &InstantiateMsg {
-                        addresses: vec![("address1".to_owned(), Decimal::one())],
+                        addresses: vec![(
+                            app.api().addr_make("address1").to_string(),
+                            Decimal::one(),
+                        )],
                         cw20_contracts: vec![
                             token_contract.to_string(),
                             token_contract2.to_string(),
@@ -674,7 +743,7 @@ mod tests {
             // it will succeed, but won't do anything
             // (this tests again trying to send 0 amount)
             app.execute_contract(
-                Addr::unchecked("owner"),
+                app.api().addr_make("owner"),
                 splitter_contract.clone(),
                 &ExecuteMsg::SendTokens {
                     native_denoms: vec![],
@@ -686,7 +755,7 @@ mod tests {
 
             // now send tokens but only of one of specified cw20 tokens
             app.execute(
-                Addr::unchecked("owner"),
+                app.api().addr_make("owner"),
                 WasmMsg::Execute {
                     contract_addr: token_contract2.to_string(),
                     msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
@@ -701,7 +770,7 @@ mod tests {
             .unwrap();
 
             app.execute_contract(
-                Addr::unchecked("owner"),
+                app.api().addr_make("owner"),
                 splitter_contract,
                 &ExecuteMsg::SendTokens {
                     native_denoms: vec![],
@@ -711,7 +780,7 @@ mod tests {
             )
             .unwrap();
             assert_eq!(
-                token_balance(&app, &token_contract2, "address1"),
+                token_balance(&app, &token_contract2, app.api().addr_make("address1")),
                 1_000_000u128
             );
         }
@@ -728,12 +797,21 @@ mod tests {
             let splitter_contract = app
                 .instantiate_contract(
                     splitter_code_id,
-                    Addr::unchecked("owner"),
+                    app.api().addr_make("owner"),
                     &InstantiateMsg {
                         addresses: vec![
-                            ("address1".to_owned(), Decimal::percent(50)),
-                            ("address2".to_owned(), Decimal::percent(25)),
-                            ("address3".to_owned(), Decimal::percent(25)),
+                            (
+                                app.api().addr_make("address1").to_string(),
+                                Decimal::percent(50),
+                            ),
+                            (
+                                app.api().addr_make("address2").to_string(),
+                                Decimal::percent(25),
+                            ),
+                            (
+                                app.api().addr_make("address3").to_string(),
+                                Decimal::percent(25),
+                            ),
                         ],
                         cw20_contracts: vec![token_contract.to_string()],
                     },
@@ -745,7 +823,7 @@ mod tests {
 
             // first send tokens to contract
             app.execute(
-                Addr::unchecked("owner"),
+                app.api().addr_make("owner"),
                 WasmMsg::Execute {
                     contract_addr: token_contract.to_string(),
                     msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
@@ -761,7 +839,7 @@ mod tests {
 
             // execute message which sends tokens according to configuration
             app.execute_contract(
-                Addr::unchecked("owner"),
+                app.api().addr_make("owner"),
                 splitter_contract,
                 &ExecuteMsg::SendTokens {
                     native_denoms: vec![],
@@ -772,27 +850,27 @@ mod tests {
             .unwrap();
 
             assert_eq!(
-                token_balance(&app, &token_contract, "address1"),
+                token_balance(&app, &token_contract, app.api().addr_make("address1")),
                 500_000u128
             );
             assert_eq!(
-                token_balance(&app, &token_contract, "address2"),
+                token_balance(&app, &token_contract, app.api().addr_make("address2")),
                 250_000u128
             );
             assert_eq!(
-                token_balance(&app, &token_contract, "address2"),
+                token_balance(&app, &token_contract, app.api().addr_make("address2")),
                 250_000u128
             );
         }
 
         #[test]
         fn split_tokens_multiple_denoms() {
-            let mut app = App::new(|router, _, storage| {
+            let mut app = App::new(|router, api, storage| {
                 router
                     .bank
                     .init_balance(
                         storage,
-                        &Addr::unchecked("owner"),
+                        &api.addr_make("owner"),
                         vec![coin(3_000_000, "ujuno")],
                     )
                     .unwrap()
@@ -808,11 +886,17 @@ mod tests {
             let splitter_contract = app
                 .instantiate_contract(
                     splitter_code_id,
-                    Addr::unchecked("owner"),
+                    app.api().addr_make("owner"),
                     &InstantiateMsg {
                         addresses: vec![
-                            ("address1".to_owned(), Decimal::percent(30)),
-                            ("address2".to_owned(), Decimal::percent(70)),
+                            (
+                                app.api().addr_make("address1").to_string(),
+                                Decimal::percent(30),
+                            ),
+                            (
+                                app.api().addr_make("address2").to_string(),
+                                Decimal::percent(70),
+                            ),
                         ],
                         cw20_contracts: vec![
                             token_contract.to_string(),
@@ -827,7 +911,7 @@ mod tests {
 
             // first send tokens to contract
             app.execute(
-                Addr::unchecked("owner"),
+                app.api().addr_make("owner"),
                 BankMsg::Send {
                     to_address: splitter_contract.to_string(),
                     amount: vec![coin(3_000_000, "ujuno")],
@@ -836,7 +920,7 @@ mod tests {
             )
             .unwrap();
             app.execute(
-                Addr::unchecked("owner"),
+                app.api().addr_make("owner"),
                 WasmMsg::Execute {
                     contract_addr: token_contract.to_string(),
                     msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
@@ -850,7 +934,7 @@ mod tests {
             )
             .unwrap();
             app.execute(
-                Addr::unchecked("owner"),
+                app.api().addr_make("owner"),
                 WasmMsg::Execute {
                     contract_addr: token_contract2.to_string(),
                     msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
@@ -866,7 +950,7 @@ mod tests {
 
             // execute message which sends tokens according to configuration
             app.execute_contract(
-                Addr::unchecked("owner"),
+                app.api().addr_make("owner"),
                 splitter_contract,
                 &ExecuteMsg::SendTokens {
                     native_denoms: vec!["ujuno".to_owned()],
@@ -878,31 +962,39 @@ mod tests {
 
             assert_eq!(
                 app.wrap()
-                    .query_all_balances("address1".to_owned())
+                    .query_all_balances(app.api().addr_make("address1").to_owned())
                     .unwrap(),
                 vec![coin(900_000u128, "ujuno")]
             );
             assert_eq!(
-                token_balance(&app, &token_contract, "address1"),
+                token_balance(&app, &token_contract, app.api().addr_make("address1")),
                 300_000u128
             );
             assert_eq!(
-                token_balance(&app, &token_contract2, "address1"),
+                token_balance(&app, &token_contract2, app.api().addr_make("address1")),
                 600_000u128
             );
 
             assert_eq!(
                 app.wrap()
-                    .query_all_balances("address2".to_owned())
+                    .query_all_balances(app.api().addr_make("address2").to_string())
                     .unwrap(),
                 vec![coin(2_100_000u128, "ujuno")]
             );
             assert_eq!(
-                token_balance(&app, &token_contract, "address2"),
+                token_balance(
+                    &app,
+                    &token_contract,
+                    app.api().addr_make("address2").to_string()
+                ),
                 700_000u128
             );
             assert_eq!(
-                token_balance(&app, &token_contract2, "address2"),
+                token_balance(
+                    &app,
+                    &token_contract2,
+                    app.api().addr_make("address2").to_string()
+                ),
                 1_400_000u128
             );
         }
@@ -921,11 +1013,17 @@ mod tests {
             let splitter_contract = app
                 .instantiate_contract(
                     splitter_code_id,
-                    Addr::unchecked("owner"),
+                    app.api().addr_make("owner"),
                     &InstantiateMsg {
                         addresses: vec![
-                            ("address1".to_owned(), Decimal::percent(30)),
-                            ("address2".to_owned(), Decimal::percent(70)),
+                            (
+                                app.api().addr_make("address1").to_string(),
+                                Decimal::percent(30),
+                            ),
+                            (
+                                app.api().addr_make("address2").to_string(),
+                                Decimal::percent(70),
+                            ),
                         ],
                         cw20_contracts: vec![
                             token_contract.to_string(),
@@ -940,7 +1038,7 @@ mod tests {
 
             // first send tokens to contract
             app.execute(
-                Addr::unchecked("owner"),
+                app.api().addr_make("owner"),
                 WasmMsg::Execute {
                     contract_addr: token_contract.to_string(),
                     msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
@@ -954,7 +1052,7 @@ mod tests {
             )
             .unwrap();
             app.execute(
-                Addr::unchecked("owner"),
+                app.api().addr_make("owner"),
                 WasmMsg::Execute {
                     contract_addr: token_contract2.to_string(),
                     msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
@@ -970,7 +1068,7 @@ mod tests {
 
             // Specify only one cw20 denom to split from
             app.execute_contract(
-                Addr::unchecked("owner"),
+                app.api().addr_make("owner"),
                 splitter_contract.clone(),
                 &ExecuteMsg::SendTokens {
                     native_denoms: vec![],
@@ -980,15 +1078,29 @@ mod tests {
             )
             .unwrap();
 
-            assert_eq!(token_balance(&app, &token_contract, "address1"), 0u128);
             assert_eq!(
-                token_balance(&app, &token_contract2, "address1"),
+                token_balance(&app, &token_contract, app.api().addr_make("address1")),
+                0u128
+            );
+            assert_eq!(
+                token_balance(&app, &token_contract2, app.api().addr_make("address1")),
                 600_000u128
             );
 
-            assert_eq!(token_balance(&app, &token_contract, "address2"), 0u128);
             assert_eq!(
-                token_balance(&app, &token_contract2, "address2"),
+                token_balance(
+                    &app,
+                    &token_contract,
+                    app.api().addr_make("address2").to_string()
+                ),
+                0u128
+            );
+            assert_eq!(
+                token_balance(
+                    &app,
+                    &token_contract2,
+                    app.api().addr_make("address2").to_string()
+                ),
                 1_400_000u128
             );
 

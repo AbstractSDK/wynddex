@@ -1,7 +1,6 @@
 use cosmwasm_std::{to_json_binary, Addr, Decimal, StdResult, SubMsg, Uint128, WasmMsg};
 use cw20::Cw20ExecuteMsg;
-
-use wynd_curve_utils::{Curve, PiecewiseLinear, SaturatingLinear};
+use wyndex::utils::{Curve, PiecewiseLinear, SaturatingLinear};
 
 use crate::state::Config;
 

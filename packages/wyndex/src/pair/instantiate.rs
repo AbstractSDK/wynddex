@@ -76,10 +76,7 @@ pub fn handle_reply(
 ) -> Result<Response, ContractError> {
     let msg_id = msg.id;
     // parse the reply
-    let result = msg
-        .result
-        .into_result()
-        .map_err(|e| StdError::generic_err(e))?;
+    let result = msg.result.into_result().map_err(StdError::generic_err)?;
     let res = cw_utils::parse_instantiate_response_data(
         result
             .msg_responses

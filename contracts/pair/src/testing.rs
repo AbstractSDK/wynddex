@@ -1,8 +1,8 @@
 use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    assert_approx_eq, attr, coins, from_json, to_json_binary, Addr, BankMsg, BlockInfo, Coin,
-    CosmosMsg, Decimal, DepsMut, Env, Fraction, ReplyOn, Response, StdError, SubMsg, Timestamp,
-    Uint128, WasmMsg,
+    assert_approx_eq, attr, coins, from_json, to_json_binary, Addr, BankMsg, Binary, BlockInfo,
+    Coin, CosmosMsg, Decimal, DepsMut, Env, Fraction, ReplyOn, Response, StdError, SubMsg,
+    Timestamp, Uint128, WasmMsg,
 };
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
 use cw_utils::MsgInstantiateContractResponse;
@@ -113,7 +113,8 @@ fn proper_initialization() {
             .into(),
             id: 1,
             gas_limit: None,
-            reply_on: ReplyOn::Success
+            reply_on: ReplyOn::Success,
+            payload: Binary::new(vec![])
         },]
     );
 
@@ -518,7 +519,8 @@ fn provide_liquidity() {
             .into(),
             id: 0,
             gas_limit: None,
-            reply_on: ReplyOn::Never
+            reply_on: ReplyOn::Never,
+            payload: Binary::new(vec![])
         }
     );
     assert_eq!(
@@ -537,6 +539,7 @@ fn provide_liquidity() {
             id: 0,
             gas_limit: None,
             reply_on: ReplyOn::Never,
+            payload: Binary::new(vec![])
         }
     );
     assert_eq!(
@@ -555,6 +558,7 @@ fn provide_liquidity() {
             id: 0,
             gas_limit: None,
             reply_on: ReplyOn::Never,
+            payload: Binary::new(vec![])
         }
     );
 
@@ -630,6 +634,7 @@ fn provide_liquidity() {
             id: 0,
             gas_limit: None,
             reply_on: ReplyOn::Never,
+            payload: Binary::new(vec![])
         }
     );
     assert_eq!(
@@ -648,6 +653,7 @@ fn provide_liquidity() {
             id: 0,
             gas_limit: None,
             reply_on: ReplyOn::Never,
+            payload: Binary::new(vec![])
         }
     );
 
@@ -975,6 +981,7 @@ fn withdraw_liquidity() {
             id: 0,
             gas_limit: None,
             reply_on: ReplyOn::Never,
+            payload: Binary::new(vec![])
         }
     );
     assert_eq!(
@@ -993,6 +1000,7 @@ fn withdraw_liquidity() {
             id: 0,
             gas_limit: None,
             reply_on: ReplyOn::Never,
+            payload: Binary::new(vec![])
         }
     );
     assert_eq!(
@@ -1010,6 +1018,7 @@ fn withdraw_liquidity() {
             id: 0,
             gas_limit: None,
             reply_on: ReplyOn::Never,
+            payload: Binary::new(vec![])
         }
     );
 
@@ -1391,6 +1400,7 @@ fn try_native_to_token() {
             id: 0,
             gas_limit: None,
             reply_on: ReplyOn::Never,
+            payload: Binary::new(vec![])
         },
         msg_transfer,
     );
@@ -1592,6 +1602,7 @@ fn try_token_to_native() {
             id: 0,
             gas_limit: None,
             reply_on: ReplyOn::Never,
+            payload: Binary::new(vec![])
         },
         msg_transfer,
     );

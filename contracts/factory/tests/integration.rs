@@ -867,7 +867,7 @@ fn check_update_owner() {
     let msg = QueryMsg::Config {};
     let res: ConfigResponse = app.wrap().query_wasm_smart(&helper.factory, &msg).unwrap();
 
-    assert_eq!(res.owner, new_owner)
+    assert_eq!(res.owner.as_str(), new_owner)
 }
 
 #[test]

@@ -20,8 +20,6 @@ fn unbond_overflow() {
     assert_eq!(
         ContractError::Std(StdError::overflow(OverflowError::new(
             OverflowOperation::Sub,
-            0,
-            1
         ))),
         err.downcast().unwrap()
     );
@@ -334,8 +332,6 @@ fn one_user_multiple_periods_rebond_fail() {
     assert_eq!(
         ContractError::Std(StdError::overflow(OverflowError::new(
             OverflowOperation::Sub,
-            20000u128,
-            50000u128
         ))),
         err.downcast().unwrap()
     );
@@ -483,8 +479,6 @@ fn one_user_rebond_decrease() {
     assert_eq!(
         ContractError::Std(StdError::overflow(OverflowError::new(
             OverflowOperation::Sub,
-            0u128,
-            10000u128
         ))),
         err.downcast().unwrap()
     );
@@ -496,8 +490,6 @@ fn one_user_rebond_decrease() {
     assert_eq!(
         ContractError::Std(StdError::overflow(OverflowError::new(
             OverflowOperation::Sub,
-            0u128,
-            10000u128
         ))),
         err.downcast().unwrap()
     );
@@ -624,8 +616,6 @@ fn one_user_rebond_decrease_then_rebond_again() {
     assert_eq!(
         ContractError::Std(StdError::overflow(OverflowError::new(
             OverflowOperation::Sub,
-            0u128,
-            10000u128
         ))),
         err.downcast().unwrap()
     );
@@ -637,8 +627,6 @@ fn one_user_rebond_decrease_then_rebond_again() {
     assert_eq!(
         ContractError::Std(StdError::overflow(OverflowError::new(
             OverflowOperation::Sub,
-            0u128,
-            10000u128
         ))),
         err.downcast().unwrap()
     );

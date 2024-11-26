@@ -36,6 +36,6 @@ fn option_queries() {
         .query_check_option(pair2_staking.0.to_string())
         .unwrap());
     assert!(!suite
-        .query_check_option(Addr::unchecked("invalid").to_string())
+        .query_check_option(suite.app.api().addr_make("invalid").to_string())
         .unwrap());
 }

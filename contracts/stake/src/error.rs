@@ -2,8 +2,7 @@ use cosmwasm_std::{Coin, OverflowError, StdError, Uint128};
 use thiserror::Error;
 
 use cw_controllers::{AdminError, HookError};
-use wynd_curve_utils::CurveError;
-use wyndex::asset::AssetInfoValidated;
+use wyndex::{asset::AssetInfoValidated, utils::CurveError};
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {

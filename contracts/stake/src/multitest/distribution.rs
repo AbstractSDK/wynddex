@@ -870,15 +870,15 @@ fn calculate_apr() {
     let annual_rewards = suite.query_annualized_rewards().unwrap();
     assert_eq!(
         // multiply by 1000 to get an int of promille. eg 123.4 % = 1.234 * 1000 = 1234
-        annual_rewards[0].1[0].amount.unwrap() * Uint128::new(1000),
+        Uint128::new(1000).mul_floor(annual_rewards[0].1[0].amount.unwrap()),
         Uint128::new(2607),
     );
     assert_eq!(
-        annual_rewards[1].1[0].amount.unwrap() * Uint128::new(1000),
+        Uint128::new(1000).mul_floor(annual_rewards[1].1[0].amount.unwrap()),
         Uint128::new(5214),
     );
     assert_eq!(
-        annual_rewards[2].1[0].amount.unwrap() * Uint128::new(1000),
+        Uint128::new(1000).mul_floor(annual_rewards[2].1[0].amount.unwrap()),
         Uint128::new(15642),
     );
 
@@ -887,15 +887,15 @@ fn calculate_apr() {
     let annual_rewards = suite.query_annualized_rewards().unwrap();
     assert_eq!(
         // multiply by 1000 to get an int of promille. eg 123.4 % = 1.234 * 1000 = 1234
-        annual_rewards[0].1[0].amount.unwrap() * Uint128::new(1000),
+        Uint128::new(1000).mul_floor(annual_rewards[0].1[0].amount.unwrap()),
         Uint128::new(2607),
     );
     assert_eq!(
-        annual_rewards[1].1[0].amount.unwrap() * Uint128::new(1000),
+        Uint128::new(1000).mul_floor(annual_rewards[1].1[0].amount.unwrap()),
         Uint128::new(5214),
     );
     assert_eq!(
-        annual_rewards[2].1[0].amount.unwrap() * Uint128::new(1000),
+        Uint128::new(1000).mul_floor(annual_rewards[2].1[0].amount.unwrap()),
         Uint128::new(15642),
     );
 
@@ -1008,15 +1008,15 @@ fn apr_cw20() {
     let annual_rewards = suite.query_annualized_rewards().unwrap();
     assert_eq!(
         // multiply by 1000 to get an int of promille. eg 123.4 % = 1.234 * 1000 = 1234
-        annual_rewards[0].1[0].amount.unwrap() * Uint128::new(1000),
+        Uint128::new(1000).mul_floor(annual_rewards[0].1[0].amount.unwrap()),
         Uint128::new(1489361702),
     );
     assert_eq!(
-        annual_rewards[1].1[0].amount.unwrap() * Uint128::new(1000),
+        Uint128::new(1000).mul_floor(annual_rewards[1].1[0].amount.unwrap()),
         Uint128::new(2127659574),
     );
     assert_eq!(
-        annual_rewards[2].1[0].amount.unwrap() * Uint128::new(1000),
+        Uint128::new(1000).mul_floor(annual_rewards[2].1[0].amount.unwrap()),
         Uint128::new(4255319148),
     );
 
@@ -1026,17 +1026,17 @@ fn apr_cw20() {
     // APR should be the same as before (modulo some rounding difference), calculated by extrapolating the curve
     let annual_rewards = suite.query_annualized_rewards().unwrap();
     assert_approx_eq!(
-        annual_rewards[0].1[0].amount.unwrap() * Uint128::new(1000),
+        Uint128::new(1000).mul_floor(annual_rewards[0].1[0].amount.unwrap()),
         Uint128::new(1489361702),
         "0.000000001"
     );
     assert_approx_eq!(
-        annual_rewards[1].1[0].amount.unwrap() * Uint128::new(1000),
+        Uint128::new(1000).mul_floor(annual_rewards[1].1[0].amount.unwrap()),
         Uint128::new(2127659574),
         "0.000000001"
     );
     assert_approx_eq!(
-        annual_rewards[2].1[0].amount.unwrap() * Uint128::new(1000),
+        Uint128::new(1000).mul_floor(annual_rewards[2].1[0].amount.unwrap()),
         Uint128::new(4255319148),
         "0.000000001"
     );
@@ -1198,7 +1198,7 @@ fn simple_apr_simulation() {
         .swap_remove(0);
     assert_eq!(
         actual_reward.amount,
-        expected_reward_per_token[0] * Uint128::new(stakes[0]),
+        Uint128::new(stakes[0]).mul_floor(expected_reward_per_token[0]),
     );
     let actual_reward = suite
         .withdrawable_rewards(members[1])
@@ -1206,7 +1206,7 @@ fn simple_apr_simulation() {
         .swap_remove(0);
     assert_eq!(
         actual_reward.amount,
-        expected_reward_per_token[1] * Uint128::new(stakes[1]),
+        Uint128::new(stakes[1]).mul_floor(expected_reward_per_token[1]),
     );
 }
 

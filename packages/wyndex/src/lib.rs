@@ -8,6 +8,7 @@ pub mod oracle;
 pub mod pair;
 pub mod querier;
 pub mod stake;
+pub mod utils;
 
 #[cfg(test)]
 mod mock_querier;
