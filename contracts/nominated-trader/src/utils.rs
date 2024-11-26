@@ -4,7 +4,7 @@ use wyndex::asset::{Asset, AssetInfo};
 use wyndex::pair::PairInfo;
 
 use cosmwasm_std::{
-    to_binary, Addr, Coin, Decimal, Deps, QuerierWrapper, StdResult, SubMsg, Uint128, WasmMsg,
+    to_json_binary, Addr, Coin, Decimal, Deps, QuerierWrapper, StdResult, SubMsg, Uint128, WasmMsg,
 };
 use wyndex::pair::{Cw20HookMsg, SimulationResponse};
 
@@ -78,7 +78,7 @@ pub fn build_swap_msg(
 
         Ok(SubMsg::new(WasmMsg::Execute {
             contract_addr: pool.contract_addr.to_string(),
-            msg: to_binary(&wyndex::pair::ExecuteMsg::Swap {
+            msg: to_json_binary(&wyndex::pair::ExecuteMsg::Swap {
                 offer_asset: offer_asset.clone(),
                 ask_asset_info: to.cloned(),
                 belief_price,
@@ -95,10 +95,10 @@ pub fn build_swap_msg(
     } else {
         Ok(SubMsg::new(WasmMsg::Execute {
             contract_addr: from.to_string(),
-            msg: to_binary(&cw20::Cw20ExecuteMsg::Send {
+            msg: to_json_binary(&cw20::Cw20ExecuteMsg::Send {
                 contract: pool.contract_addr.to_string(),
                 amount: amount_in,
-                msg: to_binary(&Cw20HookMsg::Swap {
+                msg: to_json_binary(&Cw20HookMsg::Swap {
                     ask_asset_info: to.cloned(),
                     belief_price,
                     max_spread: Some(max_spread),

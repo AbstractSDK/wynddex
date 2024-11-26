@@ -3,7 +3,7 @@ use std::collections::HashMap;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    ensure_eq, from_slice, to_binary, Addr, Binary, Decimal, Deps, DepsMut, Empty, Env,
+    ensure_eq, from_json, to_json_binary, Addr, Binary, Decimal, Deps, DepsMut, Empty, Env,
     MessageInfo, Order, Response, StdError, StdResult, Storage, Uint128, WasmMsg,
 };
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg};
@@ -20,8 +20,9 @@ use crate::distribution::{
     query_undistributed_rewards, query_withdraw_adjustment_data, query_withdrawable_rewards,
 };
 use crate::utils::{create_undelegate_msg, CurveExt};
+use cw2::ensure_from_older_version;
 use cw2::set_contract_version;
-use cw_utils::{ensure_from_older_version, maybe_addr, Expiration};
+use cw_utils::{maybe_addr, Expiration};
 
 use crate::error::ContractError;
 use crate::msg::{
@@ -215,7 +216,7 @@ pub fn execute_migrate_stake(
         // send the tokens to the converter
         .add_message(WasmMsg::Execute {
             contract_addr: cfg.cw20_contract.into_string(),
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+            msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                 recipient: converter.contract.to_string(),
                 amount,
             })?,
@@ -224,7 +225,7 @@ pub fn execute_migrate_stake(
         // once the tokens are transfered to the converter, we convert them
         .add_message(WasmMsg::Execute {
             contract_addr: converter.contract.to_string(),
-            msg: to_binary(&ConverterExecuteMsg::Convert {
+            msg: to_json_binary(&ConverterExecuteMsg::Convert {
                 sender: info.sender.to_string(),
                 amount,
                 unbonding_period,
@@ -634,7 +635,7 @@ pub fn execute_receive(
     // This cannot be fully trusted (the cw20 contract can fake it), so only use it for actions
     // in the address's favor (like paying/bonding tokens, not withdrawls)
 
-    let msg: ReceiveMsg = from_slice(&wrapper.msg)?;
+    let msg: ReceiveMsg = from_json(&wrapper.msg)?;
     let api = deps.api;
     match msg {
         ReceiveMsg::Delegate {
@@ -826,7 +827,7 @@ pub fn execute_quick_unbond(
         if !amount.is_zero() {
             let undelegate_msg = WasmMsg::Execute {
                 contract_addr: cfg.cw20_contract.to_string(),
-                msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                     recipient: staker.to_string(),
                     amount,
                 })?,
@@ -1040,31 +1041,33 @@ fn coin_to_string(amount: Uint128, address: &str) -> String {
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Claims { address } => {
-            to_binary(&CLAIMS.query_claims(deps, &deps.api.addr_validate(&address)?)?)
+            to_json_binary(&CLAIMS.query_claims(deps, &deps.api.addr_validate(&address)?)?)
         }
         QueryMsg::Staked {
             address,
             unbonding_period,
-        } => to_binary(&query_staked(deps, &env, address, unbonding_period)?),
-        QueryMsg::AnnualizedRewards {} => to_binary(&query_annualized_rewards(deps, env)?),
-        QueryMsg::BondingInfo {} => to_binary(&query_bonding_info(deps)?),
-        QueryMsg::AllStaked { address } => to_binary(&query_all_staked(deps, env, address)?),
-        QueryMsg::TotalStaked {} => to_binary(&query_total_staked(deps)?),
-        QueryMsg::TotalUnbonding {} => to_binary(&query_total_unbonding(deps)?),
-        QueryMsg::Admin {} => to_binary(&ADMIN.query_admin(deps)?),
-        QueryMsg::TotalRewardsPower {} => to_binary(&query_total_rewards(deps)?),
-        QueryMsg::RewardsPower { address } => to_binary(&query_rewards(deps, address)?),
+        } => to_json_binary(&query_staked(deps, &env, address, unbonding_period)?),
+        QueryMsg::AnnualizedRewards {} => to_json_binary(&query_annualized_rewards(deps, env)?),
+        QueryMsg::BondingInfo {} => to_json_binary(&query_bonding_info(deps)?),
+        QueryMsg::AllStaked { address } => to_json_binary(&query_all_staked(deps, env, address)?),
+        QueryMsg::TotalStaked {} => to_json_binary(&query_total_staked(deps)?),
+        QueryMsg::TotalUnbonding {} => to_json_binary(&query_total_unbonding(deps)?),
+        QueryMsg::Admin {} => to_json_binary(&ADMIN.query_admin(deps)?),
+        QueryMsg::TotalRewardsPower {} => to_json_binary(&query_total_rewards(deps)?),
+        QueryMsg::RewardsPower { address } => to_json_binary(&query_rewards(deps, address)?),
         QueryMsg::WithdrawableRewards { owner } => {
-            to_binary(&query_withdrawable_rewards(deps, owner)?)
+            to_json_binary(&query_withdrawable_rewards(deps, owner)?)
         }
-        QueryMsg::DistributedRewards {} => to_binary(&query_distributed_rewards(deps)?),
-        QueryMsg::UndistributedRewards {} => to_binary(&query_undistributed_rewards(deps, env)?),
-        QueryMsg::Delegated { owner } => to_binary(&query_delegated(deps, owner)?),
-        QueryMsg::DistributionData {} => to_binary(&query_distribution_data(deps)?),
+        QueryMsg::DistributedRewards {} => to_json_binary(&query_distributed_rewards(deps)?),
+        QueryMsg::UndistributedRewards {} => {
+            to_json_binary(&query_undistributed_rewards(deps, env)?)
+        }
+        QueryMsg::Delegated { owner } => to_json_binary(&query_delegated(deps, owner)?),
+        QueryMsg::DistributionData {} => to_json_binary(&query_distribution_data(deps)?),
         QueryMsg::WithdrawAdjustmentData { addr, asset } => {
-            to_binary(&query_withdraw_adjustment_data(deps, addr, asset)?)
+            to_json_binary(&query_withdraw_adjustment_data(deps, addr, asset)?)
         }
-        QueryMsg::UnbondAll {} => to_binary(&query_unbond_all(deps)?),
+        QueryMsg::UnbondAll {} => to_json_binary(&query_unbond_all(deps)?),
     }
 }
 
@@ -1406,7 +1409,7 @@ mod tests {
                 let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
                     sender: addr.to_string(),
                     amount: Uint128::new(*stake),
-                    msg: to_binary(&ReceiveMsg::Delegate {
+                    msg: to_json_binary(&ReceiveMsg::Delegate {
                         unbonding_period,
                         delegate_as: None,
                     })
@@ -2194,7 +2197,7 @@ mod tests {
             Cw20ReceiveMsg {
                 sender: "delegator".to_string(),
                 amount: 100u128.into(),
-                msg: to_binary(&ReceiveMsg::Delegate {
+                msg: to_json_binary(&ReceiveMsg::Delegate {
                     unbonding_period: UNBONDING_PERIOD,
                     delegate_as: Some("owner_of_stake".to_string()),
                 })

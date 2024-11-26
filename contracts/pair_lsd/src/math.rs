@@ -150,7 +150,7 @@ pub(crate) fn calc_y(
 /// Applies the target rate to the amount if the asset is the LSD token.
 pub(crate) fn apply_rate(asset: &AssetInfoValidated, amount: Uint128, config: &Config) -> Uint128 {
     if config.is_lsd(asset) {
-        amount * config.target_rate()
+        amount.mul_floor(config.target_rate())
     } else {
         amount
     }

@@ -1,4 +1,4 @@
-use cosmwasm_std::{attr, to_binary, Addr, Coin, Decimal, Uint128};
+use cosmwasm_std::{attr, to_json_binary, Addr, Coin, Decimal, Uint128};
 use cw20::{BalanceResponse, Cw20Coin, Cw20ExecuteMsg, Cw20QueryMsg, MinterResponse};
 use cw20_base::msg::InstantiateMsg as TokenInstantiateMsg;
 use cw_multi_test::{App, ContractWrapper, Executor};
@@ -419,7 +419,7 @@ fn test_provide_and_withdraw_liquidity() {
     let msg = Cw20ExecuteMsg::Send {
         contract: pair_instance.to_string(),
         amount: Uint128::from(50u8),
-        msg: to_binary(&Cw20HookMsg::WithdrawLiquidity { assets: vec![] }).unwrap(),
+        msg: to_json_binary(&Cw20HookMsg::WithdrawLiquidity { assets: vec![] }).unwrap(),
     };
     // Try to send withdraw liquidity with FOO token
     let err = router
@@ -672,7 +672,7 @@ fn test_compatibility_of_tokens_with_different_precision() {
 
     let swap_msg = Cw20ExecuteMsg::Send {
         contract: pair_instance.to_string(),
-        msg: to_binary(&Cw20HookMsg::Swap {
+        msg: to_json_binary(&Cw20HookMsg::Swap {
             ask_asset_info: None,
             belief_price: None,
             max_spread: None,

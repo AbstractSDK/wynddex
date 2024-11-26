@@ -1,6 +1,6 @@
 use anyhow::Result as AnyResult;
 
-use cosmwasm_std::{coin, to_binary, Addr, Coin, CosmosMsg, Decimal, Uint128};
+use cosmwasm_std::{coin, to_json_binary, Addr, Coin, CosmosMsg, Decimal, Uint128};
 use cw20::{BalanceResponse, Cw20ExecuteMsg, Cw20QueryMsg, MinterResponse};
 use cw20_base::msg::InstantiateMsg as Cw20BaseInstantiateMsg;
 use cw_multi_test::{App, AppResponse, BankSudo, ContractWrapper, Executor, SudoMsg};
@@ -621,7 +621,7 @@ impl StakingContract {
             &Cw20ExecuteMsg::Send {
                 contract: self.0.to_string(),
                 amount: amount.into(),
-                msg: to_binary(&ReceiveMsg::Delegate {
+                msg: to_json_binary(&ReceiveMsg::Delegate {
                     unbonding_period,
                     delegate_as: None,
                 })

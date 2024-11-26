@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    to_binary, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
+    to_json_binary, Binary, Decimal, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
 };
 use cw_storage_plus::Item;
 
@@ -33,7 +33,7 @@ pub fn query(deps: Deps, _env: Env, msg: TargetQuery) -> StdResult<Binary> {
     match msg {
         TargetQuery::TargetValue {} => {
             let target_value = MOCK_RATE.load(deps.storage)?;
-            to_binary(&TargetValueResponse { target_value })
+            to_json_binary(&TargetValueResponse { target_value })
         }
     }
 }

@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coins, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response,
+    coins, to_json_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response,
     StdResult, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
@@ -82,11 +82,11 @@ mod execute {
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: AdapterQueryMsg) -> StdResult<Binary> {
     match msg {
-        AdapterQueryMsg::Config {} => to_binary(&CONFIG.load(deps.storage)?),
-        AdapterQueryMsg::AllOptions {} => to_binary(&query::all_options(deps)?),
-        AdapterQueryMsg::CheckOption { option } => to_binary(&query::check_option(deps, option)?),
+        AdapterQueryMsg::Config {} => to_json_binary(&CONFIG.load(deps.storage)?),
+        AdapterQueryMsg::AllOptions {} => to_json_binary(&query::all_options(deps)?),
+        AdapterQueryMsg::CheckOption { option } => to_json_binary(&query::check_option(deps, option)?),
         AdapterQueryMsg::SampleGaugeMsgs { selected } => {
-            to_binary(&query::sample_gauge_msgs(deps, env, selected)?)
+            to_json_binary(&query::sample_gauge_msgs(deps, env, selected)?)
         }
     }
 }
@@ -168,10 +168,10 @@ fn create_distribute_msgs(
     match &asset.info {
         AssetInfoValidated::Token(_) => Ok(vec![WasmMsg::Execute {
             contract_addr: asset.info.to_string(),
-            msg: to_binary(&Cw20ExecuteMsg::Send {
+            msg: to_json_binary(&Cw20ExecuteMsg::Send {
                 contract: staking_contract,
                 amount: asset.amount,
-                msg: to_binary(&StakeReceiveDelegationMsg::Fund { funding_info })?,
+                msg: to_json_binary(&StakeReceiveDelegationMsg::Fund { funding_info })?,
             })?,
             funds: vec![],
         }
@@ -180,7 +180,7 @@ fn create_distribute_msgs(
             let funds = coins(asset.amount.u128(), denom);
             Ok(vec![WasmMsg::Execute {
                 contract_addr: staking_contract,
-                msg: to_binary(&StakeExecuteMsg::FundDistribution { funding_info })?,
+                msg: to_json_binary(&StakeExecuteMsg::FundDistribution { funding_info })?,
                 funds,
             }
             .into()])
@@ -226,7 +226,7 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> Result<Response, Con
 mod tests {
     use cosmwasm_std::{
         testing::{mock_dependencies, mock_env, mock_info},
-        to_binary, Coin, CosmosMsg, Decimal, Uint128, WasmMsg,
+        to_json_binary, Coin, CosmosMsg, Decimal, Uint128, WasmMsg,
     };
     use wyndex::stake::FundingInfo;
 
@@ -314,7 +314,7 @@ mod tests {
             res.execute[0],
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: "juno1555".to_string(),
-                msg: to_binary(&wyndex_stake::msg::ExecuteMsg::FundDistribution {
+                msg: to_json_binary(&wyndex_stake::msg::ExecuteMsg::FundDistribution {
                     funding_info: FundingInfo {
                         start_time: mock_env().block.time.seconds(),
                         distribution_duration: EPOCH_LENGTH,
@@ -332,7 +332,7 @@ mod tests {
             res.execute[1],
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: "juno1444".to_string(),
-                msg: to_binary(&wyndex_stake::msg::ExecuteMsg::FundDistribution {
+                msg: to_json_binary(&wyndex_stake::msg::ExecuteMsg::FundDistribution {
                     funding_info: FundingInfo {
                         start_time: mock_env().block.time.seconds(),
                         distribution_duration: EPOCH_LENGTH,
@@ -350,7 +350,7 @@ mod tests {
             res.execute[2],
             CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: "juno1333".to_string(),
-                msg: to_binary(&wyndex_stake::msg::ExecuteMsg::FundDistribution {
+                msg: to_json_binary(&wyndex_stake::msg::ExecuteMsg::FundDistribution {
                     funding_info: FundingInfo {
                         start_time: mock_env().block.time.seconds(),
                         distribution_duration: EPOCH_LENGTH,

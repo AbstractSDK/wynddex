@@ -1,7 +1,7 @@
 use crate::state::{Config, CIRCUIT_BREAKER, CONFIG, FROZEN};
 
 use cosmwasm_std::{
-    attr, ensure, entry_point, from_binary, to_binary, Addr, Binary, CosmosMsg, Decimal,
+    attr, ensure, entry_point, from_json, to_json_binary, Addr, Binary, CosmosMsg, Decimal,
     Decimal256, Deps, DepsMut, Env, Isqrt, MessageInfo, QuerierWrapper, Reply, Response, StdError,
     StdResult, Uint128, Uint256, WasmMsg,
 };
@@ -208,7 +208,7 @@ pub fn receive_cw20(
     info: MessageInfo,
     cw20_msg: Cw20ReceiveMsg,
 ) -> Result<Response, ContractError> {
-    match from_binary(&cw20_msg.msg)? {
+    match from_json(&cw20_msg.msg)? {
         Cw20HookMsg::Swap {
             belief_price,
             max_spread,
@@ -537,7 +537,7 @@ pub fn withdraw_liquidity(
         refund_assets[1].clone().into_msg(sender.clone())?,
         CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: config.pair_info.liquidity_token.to_string(),
-            msg: to_binary(&Cw20ExecuteMsg::Burn { amount })?,
+            msg: to_json_binary(&Cw20ExecuteMsg::Burn { amount })?,
             funds: vec![],
         }),
     ];
@@ -874,15 +874,15 @@ pub fn calculate_protocol_fee(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Pair {} => to_binary(&CONFIG.load(deps.storage)?.pair_info),
-        QueryMsg::Pool {} => to_binary(&query_pool(deps)?),
-        QueryMsg::Share { amount } => to_binary(&query_share(deps, amount)?),
+        QueryMsg::Pair {} => to_json_binary(&CONFIG.load(deps.storage)?.pair_info),
+        QueryMsg::Pool {} => to_json_binary(&query_pool(deps)?),
+        QueryMsg::Share { amount } => to_json_binary(&query_share(deps, amount)?),
         QueryMsg::Simulation {
             offer_asset,
             referral,
             referral_commission,
             ..
-        } => to_binary(&query_simulation(
+        } => to_json_binary(&query_simulation(
             deps,
             offer_asset,
             referral,
@@ -893,18 +893,18 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             referral,
             referral_commission,
             ..
-        } => to_binary(&query_reverse_simulation(
+        } => to_json_binary(&query_reverse_simulation(
             deps,
             ask_asset,
             referral,
             referral_commission,
         )?),
-        QueryMsg::CumulativePrices {} => to_binary(&query_cumulative_prices(deps, env)?),
+        QueryMsg::CumulativePrices {} => to_json_binary(&query_cumulative_prices(deps, env)?),
         QueryMsg::Twap {
             duration,
             start_age,
             end_age,
-        } => to_binary(&wyndex::oracle::query_oracle_range(
+        } => to_json_binary(&wyndex::oracle::query_oracle_range(
             deps.storage,
             &env,
             &CONFIG.load(deps.storage)?.pair_info.asset_infos,
@@ -912,7 +912,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             start_age,
             end_age,
         )?),
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
         _ => Err(StdError::generic_err("Query is not supported")),
     }
 }

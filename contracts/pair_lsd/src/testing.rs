@@ -7,7 +7,7 @@ use crate::mock_querier::mock_dependencies;
 
 use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    attr, coins, from_binary, to_binary, Addr, BankMsg, BlockInfo, Coin, CosmosMsg, Decimal,
+    attr, coins, from_json, to_json_binary, Addr, BankMsg, BlockInfo, Coin, CosmosMsg, Decimal,
     DepsMut, Env, ReplyOn, Response, StdError, SubMsg, Timestamp, Uint128, WasmMsg,
 };
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
@@ -74,7 +74,7 @@ fn proper_initialization() {
         ],
         token_code_id: 10u64,
         init_params: Some(
-            to_binary(&StablePoolParams {
+            to_json_binary(&StablePoolParams {
                 amp: 100,
                 owner: None,
                 lsd: None,
@@ -100,7 +100,7 @@ fn proper_initialization() {
         vec![SubMsg {
             msg: WasmMsg::Instantiate {
                 code_id: 10u64,
-                msg: to_binary(&TokenInstantiateMsg {
+                msg: to_json_binary(&TokenInstantiateMsg {
                     name: "UUSD-MAPP-LP".to_string(),
                     symbol: "uLP".to_string(),
                     decimals: 6,
@@ -174,7 +174,7 @@ fn test_freezing_a_pool_blocking_actions_then_unfreeze() {
         token_code_id: 10u64,
         factory_addr: String::from("factory"),
         init_params: Some(
-            to_binary(&StablePoolParams {
+            to_json_binary(&StablePoolParams {
                 amp: 100,
                 owner: None,
                 lsd: None,
@@ -380,7 +380,7 @@ fn test_freezing_a_pool_blocking_actions_then_unfreeze() {
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: String::from("addr0000"),
         amount: offer_amount,
-        msg: to_binary(&Cw20HookMsg::Swap {
+        msg: to_json_binary(&Cw20HookMsg::Swap {
             ask_asset_info: None,
             belief_price: None,
             max_spread: Some(Decimal::percent(50)),
@@ -401,7 +401,7 @@ fn test_freezing_a_pool_blocking_actions_then_unfreeze() {
     // Withdraw liquidity
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: String::from("addr0000"),
-        msg: to_binary(&Cw20HookMsg::WithdrawLiquidity { assets: vec![] }).unwrap(),
+        msg: to_json_binary(&Cw20HookMsg::WithdrawLiquidity { assets: vec![] }).unwrap(),
         amount: Uint128::new(100u128),
     });
 
@@ -528,7 +528,7 @@ fn provide_liquidity() {
         token_code_id: 10u64,
         factory_addr: String::from("factory"),
         init_params: Some(
-            to_binary(&StablePoolParams {
+            to_json_binary(&StablePoolParams {
                 amp: 100,
                 owner: None,
                 lsd: None,
@@ -586,7 +586,7 @@ fn provide_liquidity() {
         &SubMsg {
             msg: WasmMsg::Execute {
                 contract_addr: String::from("asset0000"),
-                msg: to_binary(&Cw20ExecuteMsg::TransferFrom {
+                msg: to_json_binary(&Cw20ExecuteMsg::TransferFrom {
                     owner: String::from("addr0000"),
                     recipient: String::from(MOCK_CONTRACT_ADDR),
                     amount: Uint128::from(100_000000000000000000u128),
@@ -606,7 +606,7 @@ fn provide_liquidity() {
         &SubMsg {
             msg: WasmMsg::Execute {
                 contract_addr: String::from("liquidity0000"),
-                msg: to_binary(&Cw20ExecuteMsg::Mint {
+                msg: to_json_binary(&Cw20ExecuteMsg::Mint {
                     recipient: String::from(MOCK_CONTRACT_ADDR),
                     amount: Uint128::from(1000_u128),
                 })
@@ -625,7 +625,7 @@ fn provide_liquidity() {
         &SubMsg {
             msg: WasmMsg::Execute {
                 contract_addr: String::from("liquidity0000"),
-                msg: to_binary(&Cw20ExecuteMsg::Mint {
+                msg: to_json_binary(&Cw20ExecuteMsg::Mint {
                     recipient: String::from("addr0000"),
                     amount: Uint128::from(299_814_698_523_989_456_628u128),
                 })
@@ -697,7 +697,7 @@ fn provide_liquidity() {
         &SubMsg {
             msg: WasmMsg::Execute {
                 contract_addr: String::from("asset0000"),
-                msg: to_binary(&Cw20ExecuteMsg::TransferFrom {
+                msg: to_json_binary(&Cw20ExecuteMsg::TransferFrom {
                     owner: String::from("addr0000"),
                     recipient: String::from(MOCK_CONTRACT_ADDR),
                     amount: Uint128::from(100_000000000000000000u128),
@@ -716,7 +716,7 @@ fn provide_liquidity() {
         &SubMsg {
             msg: WasmMsg::Execute {
                 contract_addr: String::from("liquidity0000"),
-                msg: to_binary(&Cw20ExecuteMsg::Mint {
+                msg: to_json_binary(&Cw20ExecuteMsg::Mint {
                     recipient: String::from("addr0000"),
                     amount: Uint128::from(74_944_452_888_487_171_363u128),
                 })
@@ -901,7 +901,7 @@ fn withdraw_liquidity() {
         token_code_id: 10u64,
         factory_addr: String::from("factory"),
         init_params: Some(
-            to_binary(&StablePoolParams {
+            to_json_binary(&StablePoolParams {
                 amp: 100,
                 owner: None,
                 lsd: None,
@@ -936,7 +936,7 @@ fn withdraw_liquidity() {
     // Withdraw liquidity
     let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
         sender: String::from("addr0000"),
-        msg: to_binary(&Cw20HookMsg::WithdrawLiquidity { assets: vec![] }).unwrap(),
+        msg: to_json_binary(&Cw20HookMsg::WithdrawLiquidity { assets: vec![] }).unwrap(),
         amount: Uint128::new(100000u128) - MINIMUM_LIQUIDITY_AMOUNT,
     });
 
@@ -968,7 +968,7 @@ fn withdraw_liquidity() {
         &SubMsg {
             msg: WasmMsg::Execute {
                 contract_addr: String::from("asset0000"),
-                msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                     recipient: String::from("addr0000"),
                     amount: Uint128::from(99000u128),
                 })
@@ -986,7 +986,7 @@ fn withdraw_liquidity() {
         &SubMsg {
             msg: WasmMsg::Execute {
                 contract_addr: String::from("liquidity0000"),
-                msg: to_binary(&Cw20ExecuteMsg::Burn {
+                msg: to_json_binary(&Cw20ExecuteMsg::Burn {
                     amount: Uint128::from(100000u128) - MINIMUM_LIQUIDITY_AMOUNT,
                 })
                 .unwrap(),
@@ -1040,7 +1040,7 @@ fn query_twap() {
         token_code_id: 10u64,
         factory_addr: String::from("factory"),
         init_params: Some(
-            to_binary(&StablePoolParams {
+            to_json_binary(&StablePoolParams {
                 amp: 100,
                 owner: None,
                 lsd: None,
@@ -1151,7 +1151,7 @@ fn query_twap() {
     env.block.time = env.block.time.plus_seconds(HALF_HOUR);
 
     // query twap after swap price change
-    let twap: TwapResponse = from_binary(
+    let twap: TwapResponse = from_json(
         &query(
             deps.as_ref(),
             env,
@@ -1220,7 +1220,7 @@ mod disabled {
             token_code_id: 10u64,
             factory_addr: String::from("factory"),
             init_params: Some(
-                to_binary(&StablePoolParams {
+                to_json_binary(&StablePoolParams {
                     amp: 100,
                     owner: None,
                 })
@@ -1324,7 +1324,7 @@ mod disabled {
             &SubMsg {
                 msg: WasmMsg::Execute {
                     contract_addr: String::from("asset0000"),
-                    msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                    msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                         recipient: String::from("addr0000"),
                         amount: Uint128::from(expected_return_amount),
                     })
@@ -1374,7 +1374,7 @@ mod disabled {
             token_code_id: 10u64,
             factory_addr: String::from("factory"),
             init_params: Some(
-                to_binary(&StablePoolParams {
+                to_json_binary(&StablePoolParams {
                     amp: 100,
                     owner: None,
                 })
@@ -1410,7 +1410,7 @@ mod disabled {
         let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
             sender: String::from("addr0000"),
             amount: offer_amount,
-            msg: to_binary(&Cw20HookMsg::Swap {
+            msg: to_json_binary(&Cw20HookMsg::Swap {
                 ask_asset_info: None,
                 belief_price: None,
                 max_spread: None,
@@ -1509,7 +1509,7 @@ mod disabled {
         let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
             sender: String::from("addr0000"),
             amount: offer_amount,
-            msg: to_binary(&Cw20HookMsg::Swap {
+            msg: to_json_binary(&Cw20HookMsg::Swap {
                 ask_asset_info: None,
                 belief_price: None,
                 max_spread: None,
@@ -1591,7 +1591,7 @@ mod disabled {
             token_code_id: 10u64,
             factory_addr: String::from("factory"),
             init_params: Some(
-                to_binary(&StablePoolParams {
+                to_json_binary(&StablePoolParams {
                     amp: 100,
                     owner: None,
                 })
@@ -1654,7 +1654,7 @@ mod disabled {
             token_code_id: 10u64,
             factory_addr: String::from("factory"),
             init_params: Some(
-                to_binary(&StablePoolParams {
+                to_json_binary(&StablePoolParams {
                     amp: 100,
                     owner: None,
                 })
@@ -1816,7 +1816,7 @@ mod disabled {
                 factory_addr: String::from("factory"),
                 asset_infos: vec![offer_asset.info.clone(), ask_asset.clone()],
                 token_code_id: 10u64,
-                init_params: Some(to_binary(&StablePoolParams { amp, owner: None }).unwrap()),
+                init_params: Some(to_json_binary(&StablePoolParams { amp, owner: None }).unwrap()),
             };
 
             let env = mock_env();

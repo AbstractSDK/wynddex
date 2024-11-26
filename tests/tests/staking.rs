@@ -1,6 +1,6 @@
 use tests::SuiteBuilder;
 
-use cosmwasm_std::{coin, from_slice, Addr, Decimal, Uint128};
+use cosmwasm_std::{coin, from_json, Addr, Decimal, Uint128};
 
 use wyndex::{
     asset::{AssetInfo, AssetInfoExt},
@@ -134,7 +134,7 @@ mod staking {
         // get info with staking contract address
         let pair_info = suite.query_pair(vec![ujuno_info, uluna_info]).unwrap();
 
-        let stake_config: WyndexStakeConfig = from_slice(
+        let stake_config: WyndexStakeConfig = from_json(
             &suite
                 .app
                 .wrap()

@@ -1,4 +1,4 @@
-use cosmwasm_std::{to_binary, Addr, Decimal, StdResult, SubMsg, Uint128, WasmMsg};
+use cosmwasm_std::{to_json_binary, Addr, Decimal, StdResult, SubMsg, Uint128, WasmMsg};
 use cw20::Cw20ExecuteMsg;
 
 use wynd_curve_utils::{Curve, PiecewiseLinear, SaturatingLinear};
@@ -16,7 +16,7 @@ pub fn create_undelegate_msg(
     };
     Ok(SubMsg::new(WasmMsg::Execute {
         contract_addr: contract.to_string(),
-        msg: to_binary(&undelegate)?,
+        msg: to_json_binary(&undelegate)?,
         funds: vec![],
     }))
 }
@@ -25,7 +25,7 @@ pub fn calc_power(cfg: &Config, stake: Uint128, multiplier: Decimal) -> Uint128 
     if stake < cfg.min_bond {
         Uint128::zero()
     } else {
-        stake * multiplier / cfg.tokens_per_power
+        stake.mul_floor(multiplier) / cfg.tokens_per_power
     }
 }
 

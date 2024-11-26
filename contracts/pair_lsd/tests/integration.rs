@@ -11,7 +11,7 @@ use wyndex::pair::{
 };
 
 use cosmwasm_std::{
-    attr, from_binary, to_binary, Addr, Coin, Decimal, QueryRequest, Uint128, WasmQuery,
+    attr, from_json, to_json_binary, Addr, Coin, Decimal, QueryRequest, Uint128, WasmQuery,
 };
 use cw20::{BalanceResponse, Cw20Coin, Cw20ExecuteMsg, Cw20QueryMsg, MinterResponse};
 use cw20_base::msg::InstantiateMsg as TokenInstantiateMsg;
@@ -133,7 +133,7 @@ fn instantiate_pair(router: &mut App, owner: &Addr) -> Addr {
         pair_type: PairType::Lsd {},
         asset_infos: asset_infos.clone(),
         init_params: Some(
-            to_binary(&StablePoolParams {
+            to_json_binary(&StablePoolParams {
                 amp: 100,
                 owner: None,
                 lsd: None,
@@ -222,7 +222,7 @@ fn instantiate_mixed_pair(
         pair_type: PairType::Lsd {},
         asset_infos: asset_infos.clone(),
         init_params: Some(
-            to_binary(&StablePoolParams {
+            to_json_binary(&StablePoolParams {
                 amp: 100,
                 owner: None,
                 lsd: None,
@@ -319,7 +319,7 @@ fn test_provide_and_withdraw_liquidity() {
 
     let res: Result<PairInfo, _> = router.wrap().query(&QueryRequest::Wasm(WasmQuery::Smart {
         contract_addr: pair_instance.to_string(),
-        msg: to_binary(&QueryMsg::Pair {}).unwrap(),
+        msg: to_json_binary(&QueryMsg::Pair {}).unwrap(),
     }));
     let res = res.unwrap();
 
@@ -565,7 +565,7 @@ fn provide_lp_for_single_token() {
             AssetInfo::Token(token_y_instance.to_string()),
         ],
         init_params: Some(
-            to_binary(&StablePoolParams {
+            to_json_binary(&StablePoolParams {
                 amp: 100,
                 owner: None,
                 lsd: None,
@@ -618,7 +618,7 @@ fn provide_lp_for_single_token() {
 
     let swap_msg = Cw20ExecuteMsg::Send {
         contract: pair_instance.to_string(),
-        msg: to_binary(&Cw20HookMsg::Swap {
+        msg: to_json_binary(&Cw20HookMsg::Swap {
             ask_asset_info: None,
             belief_price: None,
             max_spread: None,
@@ -728,7 +728,7 @@ fn provide_lp_for_single_token() {
     // try swap 120_000_000 from token_y to token_x (from lower token amount to higher)
     let msg = Cw20ExecuteMsg::Send {
         contract: pair_instance.to_string(),
-        msg: to_binary(&Cw20HookMsg::Swap {
+        msg: to_json_binary(&Cw20HookMsg::Swap {
             ask_asset_info: None,
             belief_price: None,
             max_spread: None,
@@ -746,7 +746,7 @@ fn provide_lp_for_single_token() {
     // try swap 120_000_000 from token_x to token_y (from higher token amount to lower )
     let msg = Cw20ExecuteMsg::Send {
         contract: pair_instance.to_string(),
-        msg: to_binary(&Cw20HookMsg::Swap {
+        msg: to_json_binary(&Cw20HookMsg::Swap {
             ask_asset_info: None,
             belief_price: None,
             max_spread: None,
@@ -887,7 +887,7 @@ fn test_compatibility_of_tokens_with_different_precision() {
             AssetInfo::Token(token_y_instance.to_string()),
         ],
         init_params: Some(
-            to_binary(&StablePoolParams {
+            to_json_binary(&StablePoolParams {
                 amp: 100,
                 owner: None,
                 lsd: None,
@@ -966,7 +966,7 @@ fn test_compatibility_of_tokens_with_different_precision() {
 
     let msg = Cw20ExecuteMsg::Send {
         contract: pair_instance.to_string(),
-        msg: to_binary(&Cw20HookMsg::Swap {
+        msg: to_json_binary(&Cw20HookMsg::Swap {
             ask_asset_info: None,
             belief_price: None,
             max_spread: None,
@@ -1309,7 +1309,7 @@ fn provide_liquidity_with_one_cw20_asset() {
         pair_type: PairType::Lsd {},
         asset_infos: asset_infos.clone(),
         init_params: Some(
-            to_binary(&StablePoolParams {
+            to_json_binary(&StablePoolParams {
                 amp: 100,
                 owner: None,
                 lsd: None,
@@ -1506,7 +1506,7 @@ fn update_pair_config() {
         token_code_id: token_contract_code_id,
         factory_addr: factory_instance.to_string(),
         init_params: Some(
-            to_binary(&StablePoolParams {
+            to_json_binary(&StablePoolParams {
                 amp: 100,
                 owner: None,
                 lsd: None,
@@ -1538,13 +1538,13 @@ fn update_pair_config() {
         .query_wasm_smart(pair.clone(), &QueryMsg::Config {})
         .unwrap();
 
-    let params: StablePoolConfig = from_binary(&res.params.unwrap()).unwrap();
+    let params: StablePoolConfig = from_json(&res.params.unwrap()).unwrap();
 
     assert_eq!(params.amp, Decimal::from_ratio(100u32, 1u32));
 
     // Start changing amp with incorrect next amp
     let msg = ExecuteMsg::UpdateConfig {
-        params: to_binary(&StablePoolUpdateParams::StartChangingAmp {
+        params: to_json_binary(&StablePoolUpdateParams::StartChangingAmp {
             next_amp: MAX_AMP + 1,
             next_amp_time: router.block_info().time.seconds(),
         })
@@ -1565,7 +1565,7 @@ fn update_pair_config() {
 
     // Start changing amp with big difference between the old and new amp value
     let msg = ExecuteMsg::UpdateConfig {
-        params: to_binary(&StablePoolUpdateParams::StartChangingAmp {
+        params: to_json_binary(&StablePoolUpdateParams::StartChangingAmp {
             next_amp: 100 * MAX_AMP_CHANGE + 1,
             next_amp_time: router.block_info().time.seconds(),
         })
@@ -1586,7 +1586,7 @@ fn update_pair_config() {
 
     // Start changing amp before the MIN_AMP_CHANGING_TIME has elapsed
     let msg = ExecuteMsg::UpdateConfig {
-        params: to_binary(&StablePoolUpdateParams::StartChangingAmp {
+        params: to_json_binary(&StablePoolUpdateParams::StartChangingAmp {
             next_amp: 250,
             next_amp_time: router.block_info().time.seconds(),
         })
@@ -1611,7 +1611,7 @@ fn update_pair_config() {
     });
 
     let msg = ExecuteMsg::UpdateConfig {
-        params: to_binary(&StablePoolUpdateParams::StartChangingAmp {
+        params: to_json_binary(&StablePoolUpdateParams::StartChangingAmp {
             next_amp: 250,
             next_amp_time: router.block_info().time.seconds() + MIN_AMP_CHANGING_TIME,
         })
@@ -1631,7 +1631,7 @@ fn update_pair_config() {
         .query_wasm_smart(pair.clone(), &QueryMsg::Config {})
         .unwrap();
 
-    let params: StablePoolConfig = from_binary(&res.params.unwrap()).unwrap();
+    let params: StablePoolConfig = from_json(&res.params.unwrap()).unwrap();
 
     assert_eq!(params.amp, Decimal::from_ratio(175u32, 1u32));
 
@@ -1644,7 +1644,7 @@ fn update_pair_config() {
         .query_wasm_smart(pair.clone(), &QueryMsg::Config {})
         .unwrap();
 
-    let params: StablePoolConfig = from_binary(&res.params.unwrap()).unwrap();
+    let params: StablePoolConfig = from_json(&res.params.unwrap()).unwrap();
 
     assert_eq!(params.amp, Decimal::from_ratio(250u32, 1u32));
 
@@ -1654,7 +1654,7 @@ fn update_pair_config() {
     });
 
     let msg = ExecuteMsg::UpdateConfig {
-        params: to_binary(&StablePoolUpdateParams::StartChangingAmp {
+        params: to_json_binary(&StablePoolUpdateParams::StartChangingAmp {
             next_amp: 50,
             next_amp_time: router.block_info().time.seconds() + MIN_AMP_CHANGING_TIME,
         })
@@ -1674,13 +1674,13 @@ fn update_pair_config() {
         .query_wasm_smart(pair.clone(), &QueryMsg::Config {})
         .unwrap();
 
-    let params: StablePoolConfig = from_binary(&res.params.unwrap()).unwrap();
+    let params: StablePoolConfig = from_json(&res.params.unwrap()).unwrap();
 
     assert_eq!(params.amp, Decimal::from_ratio(150u32, 1u32));
 
     // Stop changing amp
     let msg = ExecuteMsg::UpdateConfig {
-        params: to_binary(&StablePoolUpdateParams::StopChangingAmp {}).unwrap(),
+        params: to_json_binary(&StablePoolUpdateParams::StopChangingAmp {}).unwrap(),
     };
 
     router
@@ -1696,7 +1696,7 @@ fn update_pair_config() {
         .query_wasm_smart(pair, &QueryMsg::Config {})
         .unwrap();
 
-    let params: StablePoolConfig = from_binary(&res.params.unwrap()).unwrap();
+    let params: StablePoolConfig = from_json(&res.params.unwrap()).unwrap();
 
     assert_eq!(params.amp, Decimal::from_ratio(150u32, 1u32));
 }

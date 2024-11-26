@@ -10,7 +10,7 @@ license = { workspace = true }
 crate-type = ["cdylib", "rlib"]
 
 [features]
-backtraces = ["cosmwasm-std/backtraces"]
+
 library = []
 
 [dependencies]

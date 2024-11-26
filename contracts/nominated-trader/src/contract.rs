@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo, Order, Response,
+    to_json_binary, Addr, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo, Order, Response,
     StdResult, SubMsg, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
@@ -92,7 +92,7 @@ pub fn spend(
         .add_messages(vec![CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: cfg.token_contract.to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+            msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                 recipient: recipient.clone(),
                 amount,
             })?,
@@ -237,7 +237,7 @@ fn swap_assets(
     if !route_assets.is_empty() {
         response = response.add_submessage(SubMsg::new(WasmMsg::Execute {
             contract_addr: contract_addr.to_string(),
-            msg: to_binary(&ExecuteMsg::SwapHopAssets {
+            msg: to_json_binary(&ExecuteMsg::SwapHopAssets {
                 assets: route_assets.into_values().collect(),
                 depth: 2,
             })?,
@@ -355,9 +355,9 @@ fn update_routes(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&query_get_config(deps)?),
-        QueryMsg::Balances { assets } => to_binary(&query_get_balances(deps, env, assets)?),
-        QueryMsg::Routes {} => to_binary(&query_routes(deps)?),
+        QueryMsg::Config {} => to_json_binary(&query_get_config(deps)?),
+        QueryMsg::Balances { assets } => to_json_binary(&query_get_balances(deps, env, assets)?),
+        QueryMsg::Routes {} => to_json_binary(&query_routes(deps)?),
     }
 }
 

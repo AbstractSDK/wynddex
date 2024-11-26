@@ -1,7 +1,7 @@
 use anyhow::Result as AnyResult;
 
 use cosmwasm_schema::serde::Serialize;
-use cosmwasm_std::{coin, to_binary, Addr, Coin, Decimal, Uint128};
+use cosmwasm_std::{coin, to_json_binary, Addr, Coin, Decimal, Uint128};
 use cw20::{BalanceResponse, Cw20ExecuteMsg, Cw20QueryMsg, MinterResponse};
 use cw20_base::msg::InstantiateMsg as Cw20BaseInstantiateMsg;
 use cw_multi_test::{App, AppResponse, BankSudo, ContractWrapper, Executor, SudoMsg};
@@ -492,7 +492,7 @@ impl Suite {
             &Cw20ExecuteMsg::Send {
                 contract: contract.to_owned(),
                 amount: amount.into(),
-                msg: to_binary(&msg)?,
+                msg: to_json_binary(&msg)?,
             },
             &[],
         )
@@ -555,7 +555,7 @@ impl Suite {
             &Cw20ExecuteMsg::Send {
                 contract: self.multi_hop.to_string(),
                 amount: amount.into(),
-                msg: to_binary(&ExecuteMsg::ExecuteSwapOperations {
+                msg: to_json_binary(&ExecuteMsg::ExecuteSwapOperations {
                     operations,
                     minimum_receive: None,
                     receiver: None,

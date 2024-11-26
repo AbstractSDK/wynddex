@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::{bail, Result as AnyResult};
 
-use cosmwasm_std::{to_binary, Addr, Coin, Decimal, Empty, StdResult, Uint128};
+use cosmwasm_std::{to_json_binary, Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw20::{BalanceResponse, Cw20Coin, Cw20ExecuteMsg, Cw20QueryMsg, MinterResponse};
 use cw20_base::msg::InstantiateMsg as Cw20InstantiateMsg;
 use cw_controllers::{Claim, ClaimsResponse};
@@ -321,7 +321,7 @@ impl Suite {
             &Cw20ExecuteMsg::Send {
                 contract: self.stake_contract.to_string(),
                 amount: amount.into(),
-                msg: to_binary(&ReceiveMsg::Delegate {
+                msg: to_json_binary(&ReceiveMsg::Delegate {
                     unbonding_period: self.unbonding_period_or_default(unbonding_period),
                     delegate_as: delegate_as.map(|s| s.to_string()),
                 })?,
@@ -349,7 +349,7 @@ impl Suite {
             &Cw20ExecuteMsg::Send {
                 contract: self.stake_contract.to_string(),
                 amount: amount.into(),
-                msg: to_binary(&ReceiveMsg::MassDelegate {
+                msg: to_json_binary(&ReceiveMsg::MassDelegate {
                     unbonding_period: self.unbonding_period_or_default(unbonding_period),
                     delegate_to,
                 })?,
@@ -545,7 +545,7 @@ impl Suite {
             &Cw20ExecuteMsg::Send {
                 contract: self.stake_contract.to_string(),
                 amount: funds.amount,
-                msg: to_binary(&ReceiveMsg::Fund { funding_info })?,
+                msg: to_json_binary(&ReceiveMsg::Fund { funding_info })?,
             },
             &[],
         )

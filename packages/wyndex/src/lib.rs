@@ -38,11 +38,7 @@ mod decimal_checked_ops {
             let multiply_ratio =
                 other.full_mul(self.numerator()) / Uint256::from(self.denominator());
             if multiply_ratio > Uint256::from(Uint128::MAX) {
-                Err(OverflowError::new(
-                    cosmwasm_std::OverflowOperation::Mul,
-                    self,
-                    other,
-                ))
+                Err(OverflowError::new(cosmwasm_std::OverflowOperation::Mul))
             } else {
                 Ok(multiply_ratio.try_into().unwrap())
             }

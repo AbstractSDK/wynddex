@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::Result as AnyResult;
 use cosmwasm_std::testing::MockApi;
-use cosmwasm_std::{coin, to_binary, Addr, Coin, Decimal, Empty, StdResult, Uint128};
+use cosmwasm_std::{coin, to_json_binary, Addr, Coin, Decimal, Empty, StdResult, Uint128};
 use cw20::{BalanceResponse, Cw20Coin, Cw20ExecuteMsg, Cw20QueryMsg};
 use cw_multi_test::{App, AppResponse, Contract, ContractWrapper, Executor};
 use derivative::Derivative;
@@ -191,7 +191,7 @@ impl Helper {
             pair_type: PairType::Lsd {},
             asset_infos: asset_infos.clone(),
             init_params: Some(
-                to_binary(&StablePoolParams {
+                to_json_binary(&StablePoolParams {
                     amp,
                     owner: None,
                     lsd: None,
@@ -249,7 +249,7 @@ impl Helper {
         let msg = Cw20ExecuteMsg::Send {
             contract: self.pair_addr.to_string(),
             amount: Uint128::from(amount),
-            msg: to_binary(&Cw20HookMsg::WithdrawLiquidity { assets }).unwrap(),
+            msg: to_json_binary(&Cw20HookMsg::WithdrawLiquidity { assets }).unwrap(),
         };
 
         self.app
@@ -267,7 +267,7 @@ impl Helper {
                 let msg = Cw20ExecuteMsg::Send {
                     contract: self.pair_addr.to_string(),
                     amount: offer_asset.amount,
-                    msg: to_binary(&Cw20HookMsg::Swap {
+                    msg: to_json_binary(&Cw20HookMsg::Swap {
                         ask_asset_info: ask_asset_info.map(Into::into),
                         belief_price: None,
                         max_spread: None,

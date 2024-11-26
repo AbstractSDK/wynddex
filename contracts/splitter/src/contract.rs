@@ -1,13 +1,13 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, ensure, to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Env,
-    MessageInfo, Response, StdResult, WasmMsg,
+    coin, ensure, to_json_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut,
+    Env, MessageInfo, Response, StdResult, WasmMsg,
 };
 
+use cw2::ensure_from_older_version;
 use cw2::set_contract_version;
 use cw20::{BalanceResponse, Cw20ExecuteMsg, Cw20QueryMsg};
-use cw_utils::ensure_from_older_version;
 
 use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use crate::state::{Config, CONFIG};
@@ -113,11 +113,11 @@ mod execute {
             let amount = native_balances
                 .iter()
                 .filter_map(|bcoin| {
-                    let amount = bcoin.amount * weight;
+                    let amount = bcoin.amount.mul_floor(weight);
                     if amount.is_zero() {
                         None
                     } else {
-                        Some(coin((bcoin.amount * weight).u128(), &bcoin.denom))
+                        Some(coin((bcoin.amount.mul_floor(weight)).u128(), &bcoin.denom))
                     }
                 })
                 .collect::<Vec<Coin>>();
@@ -153,9 +153,9 @@ mod execute {
                 .map(|(token, balance)| {
                     let msg = WasmMsg::Execute {
                         contract_addr: token.to_string(),
-                        msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                        msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                             recipient: address.to_string(),
-                            amount: balance * weight,
+                            amount: balance.mul_floor(weight),
                         })?,
                         funds: vec![],
                     }
@@ -173,7 +173,7 @@ mod execute {
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&CONFIG.load(deps.storage)?),
+        QueryMsg::Config {} => to_json_binary(&CONFIG.load(deps.storage)?),
     }
 }
 
@@ -689,7 +689,7 @@ mod tests {
                 Addr::unchecked("owner"),
                 WasmMsg::Execute {
                     contract_addr: token_contract2.to_string(),
-                    msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                    msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                         recipient: splitter_contract.to_string(),
                         amount: 1_000_000u128.into(),
                     })
@@ -748,7 +748,7 @@ mod tests {
                 Addr::unchecked("owner"),
                 WasmMsg::Execute {
                     contract_addr: token_contract.to_string(),
-                    msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                    msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                         recipient: splitter_contract.to_string(),
                         amount: 1_000_000u128.into(),
                     })
@@ -839,7 +839,7 @@ mod tests {
                 Addr::unchecked("owner"),
                 WasmMsg::Execute {
                     contract_addr: token_contract.to_string(),
-                    msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                    msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                         recipient: splitter_contract.to_string(),
                         amount: 1_000_000u128.into(),
                     })
@@ -853,7 +853,7 @@ mod tests {
                 Addr::unchecked("owner"),
                 WasmMsg::Execute {
                     contract_addr: token_contract2.to_string(),
-                    msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                    msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                         recipient: splitter_contract.to_string(),
                         amount: 2_000_000u128.into(),
                     })
@@ -943,7 +943,7 @@ mod tests {
                 Addr::unchecked("owner"),
                 WasmMsg::Execute {
                     contract_addr: token_contract.to_string(),
-                    msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                    msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                         recipient: splitter_contract.to_string(),
                         amount: 1_000_000u128.into(),
                     })
@@ -957,7 +957,7 @@ mod tests {
                 Addr::unchecked("owner"),
                 WasmMsg::Execute {
                     contract_addr: token_contract2.to_string(),
-                    msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                    msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                         recipient: splitter_contract.to_string(),
                         amount: 2_000_000u128.into(),
                     })

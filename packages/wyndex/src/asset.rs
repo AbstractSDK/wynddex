@@ -9,8 +9,8 @@ use crate::querier::{
     query_balance, query_token_balance, query_token_symbol, NATIVE_TOKEN_PRECISION,
 };
 use cosmwasm_std::{
-    to_binary, Addr, Api, BankMsg, Coin, ConversionOverflowError, CosmosMsg, Decimal256, Fraction,
-    MessageInfo, QuerierWrapper, StdError, StdResult, Uint128, Uint256, WasmMsg,
+    to_json_binary, Addr, Api, BankMsg, Coin, ConversionOverflowError, CosmosMsg, Decimal256,
+    Fraction, MessageInfo, QuerierWrapper, StdError, StdResult, Uint128, Uint256, WasmMsg,
 };
 use cw20::{Cw20ExecuteMsg, Cw20QueryMsg, MinterResponse, TokenInfoResponse};
 use itertools::Itertools;
@@ -96,7 +96,7 @@ impl AssetValidated {
         match &self.info {
             AssetInfoValidated::Token(contract_addr) => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: contract_addr.to_string(),
-                msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                     recipient,
                     amount: self.amount,
                 })?,
@@ -129,7 +129,7 @@ impl AssetValidated {
             AssetInfoValidated::Token(contract_addr) => {
                 messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: contract_addr.to_string(),
-                    msg: to_binary(&Cw20ExecuteMsg::TransferFrom {
+                    msg: to_json_binary(&Cw20ExecuteMsg::TransferFrom {
                         owner: info.sender.to_string(),
                         recipient: env.contract.address.to_string(),
                         amount: self.amount,
@@ -345,6 +345,7 @@ impl AssetInfoValidated {
 }
 
 impl KeyDeserialize for &AssetInfoValidated {
+    const KEY_ELEMS: u16 = 2;
     type Output = AssetInfoValidated;
 
     fn from_vec(value: Vec<u8>) -> StdResult<Self::Output> {
@@ -536,7 +537,7 @@ impl Decimal256Ext for Decimal256 {
             .checked_div(10u128.pow(self.decimal_places() - precision).into())?
             .try_into()
             .map_err(|o: ConversionOverflowError| {
-                StdError::generic_err(format!("Error converting {}", o.value))
+                StdError::generic_err(format!("Error converting {}", o))
             })
     }
 

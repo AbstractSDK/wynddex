@@ -9,7 +9,7 @@ use crate::querier::{
 use crate::factory::PairType;
 use crate::DecimalCheckedOps;
 use cosmwasm_std::testing::MOCK_CONTRACT_ADDR;
-use cosmwasm_std::{to_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Uint128, WasmMsg};
+use cosmwasm_std::{to_json_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Uint128, WasmMsg};
 use cw20::Cw20ExecuteMsg;
 
 #[test]
@@ -176,7 +176,7 @@ fn test_asset() {
         token_asset.into_msg(Addr::unchecked("addr0000")).unwrap(),
         CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: String::from("asset0000"),
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+            msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                 recipient: String::from("addr0000"),
                 amount: Uint128::new(123123u128),
             })
@@ -231,8 +231,14 @@ fn query_wyndex_pair_contract() {
     )
     .unwrap();
 
-    assert_eq!(pair_info.contract_addr, String::from("pair0000"),);
-    assert_eq!(pair_info.liquidity_token, String::from("liquidity0000"),);
+    assert_eq!(
+        pair_info.contract_addr.to_string(),
+        String::from("pair0000"),
+    );
+    assert_eq!(
+        pair_info.liquidity_token.to_string(),
+        String::from("liquidity0000"),
+    );
 }
 
 #[test]
@@ -292,7 +298,7 @@ fn test_decimal_checked_ops() {
     for i in 0u128..100u128 {
         let dec = Decimal::from_ratio(i, 1u128);
         assert_eq!(
-            dec * Uint128::new(i),
+            Uint128::new(i).mul_floor(dec),
             dec.checked_mul_uint128(Uint128::from(i)).unwrap()
         );
     }

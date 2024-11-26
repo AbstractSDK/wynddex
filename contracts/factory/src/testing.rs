@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    attr, from_binary, to_binary, Addr, Decimal, ReplyOn, SubMsg, Uint128, WasmMsg,
+    attr, from_json, to_json_binary, Addr, Decimal, ReplyOn, SubMsg, Uint128, WasmMsg,
 };
 use cw_utils::MsgInstantiateContractResponse;
 use wyndex::fee_config::FeeConfig;
@@ -141,7 +141,7 @@ fn proper_initialization() {
     instantiate(deps.as_mut(), env.clone(), info, msg.clone()).unwrap();
 
     let query_res = query(deps.as_ref(), env, QueryMsg::Config {}).unwrap();
-    let config_res: ConfigResponse = from_binary(&query_res).unwrap();
+    let config_res: ConfigResponse = from_json(&query_res).unwrap();
     assert_eq!(123u64, config_res.token_code_id);
     assert_eq!(msg.pair_configs, config_res.pair_configs);
     assert_eq!(Addr::unchecked(owner), config_res.owner);
@@ -231,7 +231,7 @@ fn update_config() {
 
     // It worked, let's query the state
     let query_res = query(deps.as_ref(), env, QueryMsg::Config {}).unwrap();
-    let config_res: ConfigResponse = from_binary(&query_res).unwrap();
+    let config_res: ConfigResponse = from_json(&query_res).unwrap();
     assert_eq!(200u64, config_res.token_code_id);
     assert_eq!(owner, config_res.owner);
     assert_eq!(
@@ -328,7 +328,7 @@ fn update_owner() {
 
     // Let's query the state
     let config: ConfigResponse =
-        from_binary(&query(deps.as_ref(), env, QueryMsg::Config {}).unwrap()).unwrap();
+        from_json(&query(deps.as_ref(), env, QueryMsg::Config {}).unwrap()).unwrap();
     assert_eq!(new_owner, config.owner);
 }
 
@@ -364,7 +364,7 @@ fn update_pair_config() {
 
     // It worked, let's query the state
     let query_res = query(deps.as_ref(), env, QueryMsg::Config {}).unwrap();
-    let config_res: ConfigResponse = from_binary(&query_res).unwrap();
+    let config_res: ConfigResponse = from_json(&query_res).unwrap();
     assert_eq!(pair_configs, config_res.pair_configs);
 
     // Update config
@@ -416,7 +416,7 @@ fn update_pair_config() {
 
     // It worked, let's query the state
     let query_res = query(deps.as_ref(), env.clone(), QueryMsg::Config {}).unwrap();
-    let config_res: ConfigResponse = from_binary(&query_res).unwrap();
+    let config_res: ConfigResponse = from_json(&query_res).unwrap();
     assert_eq!(vec![pair_config.clone()], config_res.pair_configs);
 
     // Add second config
@@ -439,7 +439,7 @@ fn update_pair_config() {
 
     // It worked, let's query the state
     let query_res = query(deps.as_ref(), env, QueryMsg::Config {}).unwrap();
-    let config_res: ConfigResponse = from_binary(&query_res).unwrap();
+    let config_res: ConfigResponse = from_json(&query_res).unwrap();
     assert_eq!(
         vec![pair_config_custom, pair_config],
         config_res.pair_configs
@@ -526,7 +526,7 @@ fn create_pair() {
         res.messages,
         vec![SubMsg {
             msg: WasmMsg::Instantiate {
-                msg: to_binary(&PairInstantiateMsg {
+                msg: to_json_binary(&PairInstantiateMsg {
                     factory_addr: String::from(MOCK_CONTRACT_ADDR),
                     asset_infos,
                     token_code_id: msg.token_code_id,
@@ -633,7 +633,7 @@ fn register() {
     )
     .unwrap();
 
-    let pair_res: PairInfo = from_binary(&query_res).unwrap();
+    let pair_res: PairInfo = from_json(&query_res).unwrap();
     assert_eq!(
         pair_res,
         PairInfo {
@@ -707,7 +707,7 @@ fn register() {
     };
 
     let res = query(deps.as_ref(), env.clone(), query_msg).unwrap();
-    let pairs_res: PairsResponse = from_binary(&res).unwrap();
+    let pairs_res: PairsResponse = from_json(&res).unwrap();
     assert_eq!(
         pairs_res.pairs,
         vec![
@@ -742,7 +742,7 @@ fn register() {
     };
 
     let res = query(deps.as_ref(), env.clone(), query_msg).unwrap();
-    let pairs_res: PairsResponse = from_binary(&res).unwrap();
+    let pairs_res: PairsResponse = from_json(&res).unwrap();
     assert_eq!(
         pairs_res.pairs,
         vec![PairInfo {
@@ -764,7 +764,7 @@ fn register() {
     };
 
     let res = query(deps.as_ref(), env, query_msg).unwrap();
-    let pairs_res: PairsResponse = from_binary(&res).unwrap();
+    let pairs_res: PairsResponse = from_json(&res).unwrap();
     assert_eq!(
         pairs_res.pairs,
         vec![PairInfo {
@@ -816,7 +816,7 @@ fn register() {
     };
 
     let res = query(deps.as_ref(), env, query_msg).unwrap();
-    let pairs_res: PairsResponse = from_binary(&res).unwrap();
+    let pairs_res: PairsResponse = from_json(&res).unwrap();
     assert_eq!(
         pairs_res.pairs,
         vec![PairInfo {

@@ -307,7 +307,7 @@ pub fn find_spot_price(
         )?;
     }
 
-    let amount = trade * Uint256::from(10_u128.pow(decimals as u32));
+    let amount = Uint256::from(10_u128.pow(decimals as u32)).mul_floor(trade);
     Ok(Some(amount.try_into().unwrap()))
 }
 

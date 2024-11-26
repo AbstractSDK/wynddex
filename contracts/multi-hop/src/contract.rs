@@ -1,12 +1,12 @@
 use std::collections::HashSet;
 
 use cosmwasm_std::{
-    entry_point, from_binary, to_binary, Addr, Api, Binary, Coin, CosmosMsg, Decimal, Deps,
+    entry_point, from_json, to_json_binary, Addr, Api, Binary, Coin, CosmosMsg, Decimal, Deps,
     DepsMut, Env, MessageInfo, Response, StdError, StdResult, Uint128, WasmMsg,
 };
+use cw2::ensure_from_older_version;
 use cw2::set_contract_version;
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg};
-use cw_utils::ensure_from_older_version;
 
 use crate::msg::{
     ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg,
@@ -108,7 +108,7 @@ pub fn receive_cw20(
     cw20_msg: Cw20ReceiveMsg,
 ) -> Result<Response, ContractError> {
     let sender = deps.api.addr_validate(&cw20_msg.sender)?;
-    match from_binary(&cw20_msg.msg)? {
+    match from_json(&cw20_msg.msg)? {
         Cw20HookMsg::ExecuteSwapOperations {
             operations,
             minimum_receive,
@@ -214,7 +214,7 @@ mod execute {
                         denom: denom.to_string(),
                         amount,
                     }],
-                    msg: to_binary(&PairExecuteMsg::Swap {
+                    msg: to_json_binary(&PairExecuteMsg::Swap {
                         offer_asset: Asset {
                             amount,
                             ..offer_asset
@@ -231,10 +231,10 @@ mod execute {
             AssetInfo::Token(contract_addr) => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: contract_addr.to_string(),
                 funds: vec![],
-                msg: to_binary(&Cw20ExecuteMsg::Send {
+                msg: to_json_binary(&Cw20ExecuteMsg::Send {
                     contract: pair_contract,
                     amount: offer_asset.amount,
-                    msg: to_binary(&wyndex::pair::Cw20HookMsg::Swap {
+                    msg: to_json_binary(&wyndex::pair::Cw20HookMsg::Swap {
                         ask_asset_info: Some(ask_asset_info),
                         belief_price,
                         max_spread,
@@ -286,7 +286,7 @@ mod execute {
                 Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: env.contract.address.to_string(),
                     funds: vec![],
-                    msg: to_binary(&ExecuteMsg::ExecuteSwapOperation {
+                    msg: to_json_binary(&ExecuteMsg::ExecuteSwapOperation {
                         operation: op,
                         receiver: if operation_index == operations_len - 1 {
                             Some(receiver.to_string())
@@ -316,7 +316,7 @@ mod execute {
             messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: env.contract.address.to_string(),
                 funds: vec![],
-                msg: to_binary(&ExecuteMsg::AssertMinimumReceive {
+                msg: to_json_binary(&ExecuteMsg::AssertMinimumReceive {
                     asset_info: target_asset_info.into(),
                     prev_balance: receiver_balance,
                     minimum_receive,
@@ -353,13 +353,13 @@ mod execute {
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractError> {
     match msg {
-        QueryMsg::Config {} => Ok(to_binary(&query::config(deps)?)?),
+        QueryMsg::Config {} => Ok(to_json_binary(&query::config(deps)?)?),
         QueryMsg::SimulateSwapOperations {
             offer_amount,
             operations,
             referral,
             referral_commission,
-        } => Ok(to_binary(&query::simulate_swap_operations(
+        } => Ok(to_json_binary(&query::simulate_swap_operations(
             deps,
             offer_amount,
             referral,
@@ -371,7 +371,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractErr
             operations,
             referral,
             referral_commission,
-        } => Ok(to_binary(&query::simulate_reverse_swap_operations(
+        } => Ok(to_json_binary(&query::simulate_reverse_swap_operations(
             deps,
             ask_amount,
             referral,

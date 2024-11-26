@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use anyhow::Result as AnyResult;
 
 use cosmwasm_std::{
-    testing::mock_env, to_binary, Addr, Coin, Decimal, Empty, StdResult, Uint128, Validator,
+    testing::mock_env, to_json_binary, Addr, Coin, Decimal, Empty, StdResult, Uint128, Validator,
 };
 use cw20::{BalanceResponse, Cw20ExecuteMsg, Cw20QueryMsg};
 use cw_multi_test::{App, AppResponse, Contract, ContractWrapper, Executor, StakingInfo};
@@ -438,7 +438,7 @@ impl Suite {
             &Cw20ExecuteMsg::Send {
                 contract: pair.staking_addr(self).to_string(),
                 amount: amount.into(),
-                msg: to_binary(&ReceiveMsg::Delegate {
+                msg: to_json_binary(&ReceiveMsg::Delegate {
                     unbonding_period,
                     delegate_as: None,
                 })?,

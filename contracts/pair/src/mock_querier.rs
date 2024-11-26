@@ -1,6 +1,6 @@
 use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_binary, from_slice, to_binary, Addr, Coin, Decimal, Empty, OwnedDeps, Querier,
+    from_json, from_json, to_json_binary, Addr, Coin, Decimal, Empty, OwnedDeps, Querier,
     QuerierResult, QueryRequest, SystemError, SystemResult, Uint128, WasmQuery,
 };
 use std::collections::HashMap;
@@ -64,7 +64,7 @@ pub(crate) fn balances_to_map(
 impl Querier for WasmMockQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         // MockQuerier doesn't support Custom, so we ignore it completely
-        let request: QueryRequest<Empty> = match from_slice(bin_request) {
+        let request: QueryRequest<Empty> = match from_json(bin_request) {
             Ok(v) => v,
             Err(e) => {
                 return SystemResult::Err(SystemError::InvalidRequest {
@@ -82,9 +82,9 @@ impl WasmMockQuerier {
         match &request {
             QueryRequest::Wasm(WasmQuery::Smart { contract_addr, msg }) => {
                 if contract_addr == "factory" {
-                    match from_binary(msg).unwrap() {
+                    match from_json(msg).unwrap() {
                         FeeInfo { .. } => SystemResult::Ok(
-                            to_binary(&FeeInfoResponse {
+                            to_json_binary(&FeeInfoResponse {
                                 fee_address: Some(Addr::unchecked("fee_address")),
                                 total_fee_bps: 30,
                                 protocol_fee_bps: 1660,
@@ -92,7 +92,7 @@ impl WasmMockQuerier {
                             .into(),
                         ),
                         Config {} => SystemResult::Ok(
-                            to_binary(&ConfigResponse {
+                            to_json_binary(&ConfigResponse {
                                 owner: Addr::unchecked("owner"),
                                 pair_configs: vec![],
                                 token_code_id: 0,
@@ -106,7 +106,7 @@ impl WasmMockQuerier {
                         _ => panic!("DO NOT ENTER HERE"),
                     }
                 } else {
-                    match from_binary(msg).unwrap() {
+                    match from_json(msg).unwrap() {
                         Cw20QueryMsg::TokenInfo {} => {
                             let balances: &HashMap<String, Uint128> =
                                 match self.token_querier.balances.get(contract_addr) {
@@ -123,7 +123,7 @@ impl WasmMockQuerier {
                             }
 
                             SystemResult::Ok(
-                                to_binary(&TokenInfoResponse {
+                                to_json_binary(&TokenInfoResponse {
                                     name: "mAPPL".to_string(),
                                     symbol: "mAPPL".to_string(),
                                     decimals: 6,
@@ -149,7 +149,7 @@ impl WasmMockQuerier {
                             };
 
                             SystemResult::Ok(
-                                to_binary(&BalanceResponse { balance: *balance }).into(),
+                                to_json_binary(&BalanceResponse { balance: *balance }).into(),
                             )
                         }
                         _ => panic!("DO NOT ENTER HERE"),
@@ -158,7 +158,7 @@ impl WasmMockQuerier {
             }
             QueryRequest::Wasm(WasmQuery::Raw { contract_addr, .. }) => {
                 if contract_addr == "factory" {
-                    SystemResult::Ok(to_binary(&Vec::<Addr>::new()).into())
+                    SystemResult::Ok(to_json_binary(&Vec::<Addr>::new()).into())
                 } else {
                     panic!("DO NOT ENTER HERE");
                 }

@@ -4,7 +4,7 @@ use std::vec;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    attr, ensure, from_binary, to_binary, wasm_execute, Addr, Binary, CosmosMsg, Decimal,
+    attr, ensure, from_json, to_json_binary, wasm_execute, Addr, Binary, CosmosMsg, Decimal,
     Decimal256, Deps, DepsMut, Empty, Env, Fraction, MessageInfo, QuerierWrapper, Reply, Response,
     StdError, StdResult, Uint128, Uint256, WasmMsg,
 };
@@ -75,7 +75,7 @@ pub fn instantiate(
 
     msg.validate_fees()?;
 
-    let params: StablePoolParams = from_binary(&msg.init_params.unwrap())?;
+    let params: StablePoolParams = from_json(&msg.init_params.unwrap())?;
 
     if params.amp == 0 || params.amp > MAX_AMP {
         return Err(ContractError::IncorrectAmp { max_amp: MAX_AMP });
@@ -321,7 +321,7 @@ pub fn receive_cw20(
     info: MessageInfo,
     cw20_msg: Cw20ReceiveMsg,
 ) -> Result<Response, ContractError> {
-    match from_binary(&cw20_msg.msg)? {
+    match from_json(&cw20_msg.msg)? {
         Cw20HookMsg::Swap {
             ask_asset_info,
             belief_price,
@@ -473,7 +473,7 @@ pub fn provide_liquidity(
             if let AssetInfoValidated::Token(contract_addr) = &deposit.info {
                 messages.push(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: contract_addr.to_string(),
-                    msg: to_binary(&Cw20ExecuteMsg::TransferFrom {
+                    msg: to_json_binary(&Cw20ExecuteMsg::TransferFrom {
                         owner: info.sender.to_string(),
                         recipient: env.contract.address.to_string(),
                         amount: deposit.amount,
@@ -1059,7 +1059,7 @@ pub fn calculate_protocol_fee(
     commission_amount: Uint128,
     protocol_commission_rate: Decimal,
 ) -> Option<AssetValidated> {
-    let protocol_fee: Uint128 = commission_amount * protocol_commission_rate;
+    let protocol_fee: Uint128 = commission_amount.mul_floor(protocol_commission_rate);
     if protocol_fee.is_zero() {
         return None;
     }
@@ -1095,15 +1095,15 @@ pub fn calculate_protocol_fee(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Pair {} => to_binary(&CONFIG.load(deps.storage)?.pair_info),
-        QueryMsg::Pool {} => to_binary(&query_pool(deps)?),
-        QueryMsg::Share { amount } => to_binary(&query_share(deps, amount)?),
+        QueryMsg::Pair {} => to_json_binary(&CONFIG.load(deps.storage)?.pair_info),
+        QueryMsg::Pool {} => to_json_binary(&query_pool(deps)?),
+        QueryMsg::Share { amount } => to_json_binary(&query_share(deps, amount)?),
         QueryMsg::Simulation {
             offer_asset,
             ask_asset_info,
             referral,
             referral_commission,
-        } => to_binary(&query_simulation(
+        } => to_json_binary(&query_simulation(
             deps,
             env,
             offer_asset,
@@ -1116,7 +1116,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             ask_asset,
             referral,
             referral_commission,
-        } => to_binary(&query_reverse_simulation(
+        } => to_json_binary(&query_reverse_simulation(
             deps,
             env,
             ask_asset,
@@ -1124,12 +1124,12 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             referral,
             referral_commission,
         )?),
-        QueryMsg::CumulativePrices {} => to_binary(&query_cumulative_prices(deps, env)?),
+        QueryMsg::CumulativePrices {} => to_json_binary(&query_cumulative_prices(deps, env)?),
         QueryMsg::Twap {
             duration,
             start_age,
             end_age,
-        } => to_binary(&wyndex::oracle::query_oracle_range(
+        } => to_json_binary(&wyndex::oracle::query_oracle_range(
             deps.storage,
             &env,
             &CONFIG.load(deps.storage)?.pair_info.asset_infos,
@@ -1137,16 +1137,18 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             start_age,
             end_age,
         )?),
-        QueryMsg::Config {} => to_binary(&query_config(deps, env)?),
-        QueryMsg::QueryComputeD {} => to_binary(&query_compute_d(deps, env)?),
-        QueryMsg::SpotPrice { offer, ask } => to_binary(&query_spot_price(deps, env, offer, ask)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps, env)?),
+        QueryMsg::QueryComputeD {} => to_json_binary(&query_compute_d(deps, env)?),
+        QueryMsg::SpotPrice { offer, ask } => {
+            to_json_binary(&query_spot_price(deps, env, offer, ask)?)
+        }
         QueryMsg::SpotPricePrediction {
             offer,
             ask,
             max_trade,
             target_price,
             iterations,
-        } => to_binary(&query_spot_price_prediction(
+        } => to_json_binary(&query_spot_price_prediction(
             deps,
             env,
             offer,
@@ -1397,7 +1399,7 @@ pub fn query_config(deps: Deps, env: Env) -> StdResult<ConfigResponse> {
     let config = CONFIG.load(deps.storage)?;
     Ok(ConfigResponse {
         block_time_last: config.block_time_last,
-        params: Some(to_binary(&StablePoolConfig {
+        params: Some(to_json_binary(&StablePoolConfig {
             amp: Decimal::from_ratio(compute_current_amp(&config, &env)?, AMP_PRECISION),
         })?),
         owner: config.owner,
@@ -1515,7 +1517,7 @@ pub fn update_config(
         return Err(ContractError::Unauthorized {});
     }
 
-    match from_binary::<StablePoolUpdateParams>(&params)? {
+    match from_json::<StablePoolUpdateParams>(&params)? {
         StablePoolUpdateParams::StartChangingAmp {
             next_amp,
             next_amp_time,

@@ -1,6 +1,6 @@
 use anyhow::Result as AnyResult;
 
-use cosmwasm_std::{coin, to_binary, Addr, Coin, Decimal, Uint128};
+use cosmwasm_std::{coin, to_json_binary, Addr, Coin, Decimal, Uint128};
 use cw20::{BalanceResponse, Cw20ExecuteMsg, Cw20QueryMsg, MinterResponse};
 use cw20_base::msg::InstantiateMsg as Cw20BaseInstantiateMsg;
 use cw_multi_test::{App, AppResponse, BankSudo, ContractWrapper, Executor, SudoMsg};
@@ -255,7 +255,7 @@ impl Suite {
             &FactoryExecuteMsg::CreatePair {
                 pair_type,
                 asset_infos: tokens.to_vec(),
-                init_params: init_params.map(|p| to_binary(&p).unwrap()),
+                init_params: init_params.map(|p| to_json_binary(&p).unwrap()),
                 staking_config: Default::default(),
                 total_fee_bps: None,
             },
@@ -480,7 +480,7 @@ impl Suite {
                 &Cw20ExecuteMsg::Send {
                     contract: pair.to_string(),
                     amount: offer_asset.amount,
-                    msg: to_binary(&Cw20HookMsg::Swap {
+                    msg: to_json_binary(&Cw20HookMsg::Swap {
                         ask_asset_info: ask_asset_info.into(),
                         referral_address: None,
                         referral_commission: None,
@@ -525,7 +525,7 @@ impl Suite {
             &Cw20ExecuteMsg::Send {
                 contract: pair.to_string(),
                 amount: amount.into(),
-                msg: to_binary(&Cw20HookMsg::WithdrawLiquidity { assets })?,
+                msg: to_json_binary(&Cw20HookMsg::WithdrawLiquidity { assets })?,
             },
             &[],
         )
@@ -536,7 +536,7 @@ impl Suite {
             Addr::unchecked("sender"),
             self.mock_hub.clone(),
             &PairExecuteMsg::UpdateConfig {
-                params: to_binary(&params)?,
+                params: to_json_binary(&params)?,
             },
             &[],
         )

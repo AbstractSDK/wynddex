@@ -10,7 +10,7 @@ use wyndex::fee_config::FeeConfig;
 use wyndex::pair::{PairInfo, PoolResponse, QueryMsg as PairQueryMsg};
 
 use crate::msg::{MigrateMsg, OrigMigrateMsg, QueryMsg};
-use cosmwasm_std::{coin, to_binary, Addr, Coin, Decimal, Uint128};
+use cosmwasm_std::{coin, to_json_binary, Addr, Coin, Decimal, Uint128};
 use cw20_base::msg::InstantiateMsg as Cw20BaseInstantiateMsg;
 use cw_multi_test::{next_block, App, AppResponse, BankSudo, ContractWrapper, Executor, SudoMsg};
 use stake_cw20::msg::{ClaimsResponse, InstantiateMsg as StakeCw20IntantiateMsg};
@@ -638,7 +638,7 @@ impl Suite {
         lp_contract: Option<&Addr>,
         staking_contract: Option<&Addr>,
     ) -> AnyResult<AppResponse> {
-        let msg = to_binary(&stake_cw20::msg::ReceiveMsg::Stake {})?;
+        let msg = to_json_binary(&stake_cw20::msg::ReceiveMsg::Stake {})?;
         self.app.execute_contract(
             Addr::unchecked(user),
             lp_contract

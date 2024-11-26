@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    attr, entry_point, from_binary, to_binary, Addr, Binary, CosmosMsg, Decimal, Deps, DepsMut,
+    attr, entry_point, from_json, to_json_binary, Addr, Binary, CosmosMsg, Decimal, Deps, DepsMut,
     Env, MessageInfo, Order, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, WasmMsg,
 };
 use cw2::set_contract_version;
@@ -277,7 +277,7 @@ fn receive_cw20_message(
         ));
     }
 
-    match from_binary(&msg.msg)? {
+    match from_json(&msg.msg)? {
         ReceiveMsg::CreatePair {
             pair_type,
             asset_infos,
@@ -339,7 +339,7 @@ fn execute_update_pair_fees(
     // send update message to pair
     Ok(Response::default().add_message(WasmMsg::Execute {
         contract_addr: pair.to_string(),
-        msg: to_binary(&PairExecuteMsg::UpdateFees { fee_config })?,
+        msg: to_json_binary(&PairExecuteMsg::UpdateFees { fee_config })?,
         funds: Vec::new(),
     }))
 }
@@ -375,7 +375,7 @@ fn execute_create_distribution_flow(
     Ok(
         Response::new().add_submessage(SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: staking.to_string(),
-            msg: to_binary(&StakeExecuteMsg::CreateDistributionFlow {
+            msg: to_json_binary(&StakeExecuteMsg::CreateDistributionFlow {
                 manager: env.contract.address.to_string(), // use factory as manager for now
                 asset,
                 rewards,
@@ -521,7 +521,7 @@ pub fn execute_create_pair(
         msg: WasmMsg::Instantiate {
             admin: Some(config.owner.to_string()),
             code_id: pair_config.code_id,
-            msg: to_binary(&PairInstantiateMsg {
+            msg: to_json_binary(&PairInstantiateMsg {
                 asset_infos: asset_infos.iter().cloned().map(Into::into).collect(),
                 token_code_id: config.token_code_id,
                 factory_addr: env.contract.address.to_string(),
@@ -733,18 +733,18 @@ pub fn deregister_pool_and_staking(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
-        QueryMsg::Pair { asset_infos } => to_binary(&query_pair(deps, asset_infos)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
+        QueryMsg::Pair { asset_infos } => to_json_binary(&query_pair(deps, asset_infos)?),
         QueryMsg::Pairs { start_after, limit } => {
-            to_binary(&query_pairs(deps, start_after, limit)?)
+            to_json_binary(&query_pairs(deps, start_after, limit)?)
         }
-        QueryMsg::FeeInfo { pair_type } => to_binary(&query_fee_info(deps, pair_type)?),
-        QueryMsg::BlacklistedPairTypes {} => to_binary(&query_blacklisted_pair_types(deps)?),
+        QueryMsg::FeeInfo { pair_type } => to_json_binary(&query_fee_info(deps, pair_type)?),
+        QueryMsg::BlacklistedPairTypes {} => to_json_binary(&query_blacklisted_pair_types(deps)?),
         QueryMsg::PairsToMigrate {} => {
-            to_binary(&PAIRS_TO_MIGRATE.may_load(deps.storage)?.unwrap_or_default())
+            to_json_binary(&PAIRS_TO_MIGRATE.may_load(deps.storage)?.unwrap_or_default())
         }
         QueryMsg::ValidateStakingAddress { address } => {
-            to_binary(&STAKING_ADDRESSES.has(deps.storage, &deps.api.addr_validate(&address)?))
+            to_json_binary(&STAKING_ADDRESSES.has(deps.storage, &deps.api.addr_validate(&address)?))
         }
     }
 }

@@ -90,7 +90,7 @@ pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
 }
 
 mod execute {
-    use cosmwasm_std::{to_binary, SubMsg, Uint128, WasmMsg};
+    use cosmwasm_std::{to_json_binary, SubMsg, Uint128, WasmMsg};
     use cw20::Cw20ExecuteMsg;
     use wyndex::{
         asset::AssetInfoValidated,
@@ -146,10 +146,10 @@ mod execute {
         let resp = Response::new().add_submessage(SubMsg::reply_on_success(
             WasmMsg::Execute {
                 contract_addr: pair_info_from.liquidity_token.into_string(),
-                msg: to_binary(&Cw20ExecuteMsg::Send {
+                msg: to_json_binary(&Cw20ExecuteMsg::Send {
                     contract: pair_contract_from.into_string(),
                     amount,
-                    msg: to_binary(&Cw20HookMsg::WithdrawLiquidity { assets: vec![] })?,
+                    msg: to_json_binary(&Cw20HookMsg::WithdrawLiquidity { assets: vec![] })?,
                 })?,
                 funds: vec![],
             },
@@ -161,7 +161,7 @@ mod execute {
 }
 
 mod reply {
-    use cosmwasm_std::{to_binary, Coin, Decimal, SubMsg, WasmMsg};
+    use cosmwasm_std::{to_json_binary, Coin, Decimal, SubMsg, WasmMsg};
     use cw20::Cw20ExecuteMsg;
     use wynd_lsd_hub::msg::ExecuteMsg as HubExecuteMsg;
     use wyndex::stake::ReceiveMsg;
@@ -192,7 +192,7 @@ mod reply {
         let resp = Response::new().add_submessage(SubMsg::reply_on_success(
             WasmMsg::Execute {
                 contract_addr: config.hub_contract.into_string(),
-                msg: to_binary(&HubExecuteMsg::Bond {})?,
+                msg: to_json_binary(&HubExecuteMsg::Bond {})?,
                 funds: vec![Coin {
                     denom: config.base_denom,
                     amount,
@@ -239,7 +239,7 @@ mod reply {
             if let AssetInfo::Token(cw20) = &asset.info {
                 resp = resp.add_message(WasmMsg::Execute {
                     contract_addr: cw20.clone(),
-                    msg: to_binary(&Cw20ExecuteMsg::IncreaseAllowance {
+                    msg: to_json_binary(&Cw20ExecuteMsg::IncreaseAllowance {
                         spender: tmp_data.pair_contract_to.to_string(),
                         amount: asset.amount,
                         expires: None,
@@ -253,7 +253,7 @@ mod reply {
         let resp = resp.add_submessage(SubMsg::reply_on_success(
             WasmMsg::Execute {
                 contract_addr: tmp_data.pair_contract_to.into_string(),
-                msg: to_binary(&PairExecuteMsg::ProvideLiquidity {
+                msg: to_json_binary(&PairExecuteMsg::ProvideLiquidity {
                     assets,
                     slippage_tolerance: Some(Decimal::percent(50)), // this is the max allowed slippage
                     receiver: None, // we receive the LP tokens back, since we are the sender
@@ -286,10 +286,10 @@ mod reply {
         // send the LP tokens to the staking contract
         let resp = Response::new().add_message(WasmMsg::Execute {
             contract_addr: pair_info_to.liquidity_token.into_string(),
-            msg: to_binary(&Cw20ExecuteMsg::Send {
+            msg: to_json_binary(&Cw20ExecuteMsg::Send {
                 contract: pair_info_to.staking_addr.into_string(),
                 amount: lp_balance,
-                msg: to_binary(&ReceiveMsg::Delegate {
+                msg: to_json_binary(&ReceiveMsg::Delegate {
                     unbonding_period: tmp_data.unbonding_period,
                     delegate_as: Some(tmp_data.lp_owner.into_string()), // this avoids another reply
                 })?,

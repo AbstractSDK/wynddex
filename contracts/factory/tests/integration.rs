@@ -1,6 +1,6 @@
 mod factory_helper;
 
-use cosmwasm_std::{attr, from_slice, Addr, Decimal, StdError, Uint128};
+use cosmwasm_std::{attr, from_json, Addr, Decimal, StdError, Uint128};
 use wyndex::asset::AssetInfo;
 use wyndex::factory::{
     ConfigResponse, DefaultStakeConfig, ExecuteMsg, FeeInfoResponse, InstantiateMsg, MigrateMsg,
@@ -133,7 +133,7 @@ fn update_config() {
     assert_eq!("fee", config_res.fee_address.unwrap().to_string());
 
     // query config raw to get default stake config
-    let raw_config: Config = from_slice(
+    let raw_config: Config = from_json(
         &app.wrap()
             .query_wasm_raw(&helper.factory, "config".as_bytes())
             .unwrap()

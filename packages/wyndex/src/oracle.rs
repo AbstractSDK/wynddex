@@ -480,8 +480,8 @@ mod tests {
         let expected = Decimal::from_ratio(11u128, 18u128);
         // they should be close to 1 part per 1_000_000 (rounding)
         assert_eq!(
-            b_per_a * Uint128::new(1_000_000),
-            expected * Uint128::new(1_000_000)
+            Uint128::new(1_000_000).mul_floor(b_per_a),
+            Uint128::new(1_000_000).mul_floor(expected)
         );
     }
 

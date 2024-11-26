@@ -9,7 +9,7 @@ use crate::{
 };
 
 use cosmwasm_std::{
-    to_binary, Addr, Binary, Decimal, Decimal256, QuerierWrapper, StdError, StdResult, Uint128,
+    to_json_binary, Addr, Binary, Decimal, Decimal256, QuerierWrapper, StdError, StdResult, Uint128,
     WasmMsg,
 };
 use cw20::Cw20ReceiveMsg;
@@ -151,7 +151,7 @@ impl StakeConfig {
             .to_string();
         Ok(WasmMsg::Instantiate {
             code_id: self.staking_code_id,
-            msg: to_binary(&crate::stake::InstantiateMsg {
+            msg: to_json_binary(&crate::stake::InstantiateMsg {
                 cw20_contract: lp_token_address, // address of LP token
                 tokens_per_power: self.tokens_per_power,
                 min_bond: self.min_bond,

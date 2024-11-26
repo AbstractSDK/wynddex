@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, ensure_eq, to_binary, Addr, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Order,
+    coin, ensure_eq, to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Empty, Env, MessageInfo, Order,
     Reply, Response, StdResult, SubMsg, Uint128, WasmMsg,
 };
 
@@ -39,7 +39,7 @@ pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> Result<Binary, ContractEr
                 .keys(_deps.storage, None, None, Order::Ascending)
                 .next()
                 .is_none();
-            Ok(to_binary(&no_stakers)?)
+            Ok(to_json_binary(&no_stakers)?)
         }
     }
 }
@@ -170,7 +170,7 @@ pub fn migrate_tokens(
     let allowance = WasmMsg::Execute {
         contract_addr: token.0.to_string(),
         funds: vec![],
-        msg: to_binary(&cw20::Cw20ExecuteMsg::IncreaseAllowance {
+        msg: to_json_binary(&cw20::Cw20ExecuteMsg::IncreaseAllowance {
             spender: migration.junoswap_pool.to_string(),
             amount: balance,
             expires: None,
@@ -181,7 +181,7 @@ pub fn migrate_tokens(
     let withdraw = WasmMsg::Execute {
         contract_addr: migration.junoswap_pool.into_string(),
         funds: vec![],
-        msg: to_binary(&wasmswap::msg::ExecuteMsg::RemoveLiquidity {
+        msg: to_json_binary(&wasmswap::msg::ExecuteMsg::RemoveLiquidity {
             amount: balance,
             min_token1: Uint128::zero(),
             min_token2: Uint128::zero(),
@@ -240,10 +240,10 @@ pub fn migrate_stakers(
     let stake_msg = WasmMsg::Execute {
         contract_addr: config.lp_token.to_string(),
         funds: vec![],
-        msg: to_binary(&cw20::Cw20ExecuteMsg::Send {
+        msg: to_json_binary(&cw20::Cw20ExecuteMsg::Send {
             contract: config.staking_addr.into_string(),
             amount: batch_lp,
-            msg: to_binary(&bond_msg)?,
+            msg: to_json_binary(&bond_msg)?,
         })?,
     };
 
@@ -283,7 +283,7 @@ pub fn reply_one(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
     let deposit = WasmMsg::Execute {
         contract_addr: destination.into_string(),
         funds,
-        msg: to_binary(&wyndex::pair::ExecuteMsg::ProvideLiquidity {
+        msg: to_json_binary(&wyndex::pair::ExecuteMsg::ProvideLiquidity {
             assets,
             // TODO: set some value here?
             slippage_tolerance: None,
@@ -327,7 +327,7 @@ fn prepare_denom_deposit(
             };
             let msg = WasmMsg::Execute {
                 contract_addr: token.to_string(),
-                msg: to_binary(&embed)?,
+                msg: to_json_binary(&embed)?,
                 funds: vec![],
             };
             msgs.push(msg);

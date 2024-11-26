@@ -13,7 +13,7 @@ homepage = "https://www.wynddao.com"
 [features]
 # for quicker tests, cargo test --lib
 # for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
+
 
 [dependencies]
 thiserror = { workspace = true }

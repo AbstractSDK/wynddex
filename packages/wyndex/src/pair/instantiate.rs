@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    to_binary, Addr, DepsMut, Env, QuerierWrapper, Reply, Response, StdError, StdResult, Storage,
-    SubMsg, WasmMsg,
+    to_json_binary, Addr, DepsMut, Env, QuerierWrapper, Reply, Response, StdError, StdResult,
+    Storage, SubMsg, WasmMsg,
 };
 use cw20::MinterResponse;
 use cw20_base::msg::InstantiateMsg as TokenInstantiateMsg;
@@ -40,7 +40,7 @@ pub fn create_lp_token(
         WasmMsg::Instantiate {
             admin: Some(factory_config.owner.to_string()),
             code_id: token_code_id,
-            msg: to_binary(&TokenInstantiateMsg {
+            msg: to_json_binary(&TokenInstantiateMsg {
                 name: token_name,
                 symbol: "uLP".to_string(),
                 decimals: LP_TOKEN_PRECISION,
@@ -76,9 +76,21 @@ pub fn handle_reply(
 ) -> Result<Response, ContractError> {
     let msg_id = msg.id;
     // parse the reply
-    let res = cw_utils::parse_reply_instantiate_data(msg).map_err(|_| {
-        StdError::parse_err("MsgInstantiateContractResponse", "failed to parse data")
-    })?;
+    let result = msg
+        .result
+        .into_result()
+        .map_err(|e| StdError::generic_err(e))?;
+    let res = cw_utils::parse_instantiate_response_data(
+        result
+            .msg_responses
+            .get(0)
+            .cloned()
+            .map(|v| v.value)
+            .or(result.data)
+            .unwrap()
+            .as_slice(),
+    )
+    .map_err(|_| StdError::parse_err("MsgInstantiateContractResponse", "failed to parse data"))?;
     match msg_id {
         INSTANTIATE_TOKEN_REPLY_ID => instantiate_lp_token_reply(deps, res, factory, pair_info),
         INSTANTIATE_STAKE_REPLY_ID => instantiate_staking_reply(deps, res, pair_info),

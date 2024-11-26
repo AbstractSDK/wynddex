@@ -5,7 +5,7 @@ use super::error::ContractError;
 use crate::asset::{Asset, AssetInfo, AssetInfoValidated, AssetValidated};
 
 use cosmwasm_std::{
-    from_slice, wasm_execute, Addr, Api, CosmosMsg, Decimal, Fraction, QuerierWrapper, StdError,
+    from_json, wasm_execute, Addr, Api, CosmosMsg, Decimal, Fraction, QuerierWrapper, StdError,
     StdResult, Uint128,
 };
 use cw20::Cw20ExecuteMsg;
@@ -24,7 +24,7 @@ pub fn migration_check(
     pair_addr: &Addr,
 ) -> StdResult<bool> {
     if let Some(res) = querier.query_wasm_raw(factory, b"pairs_to_migrate".as_slice())? {
-        let res: Vec<Addr> = from_slice(&res)?;
+        let res: Vec<Addr> = from_json(&res)?;
         Ok(res.contains(pair_addr))
     } else {
         Ok(false)
@@ -107,12 +107,11 @@ pub fn assert_max_spread(
     }
 
     if let Some(belief_price) = belief_price {
-        let expected_return = offer_amount
-            * belief_price.inv().ok_or_else(|| {
-                ContractError::Std(StdError::generic_err(
-                    "Invalid belief_price. Check the input values.",
-                ))
-            })?;
+        let expected_return = offer_amount.mul_floor(belief_price.inv().ok_or_else(|| {
+            ContractError::Std(StdError::generic_err(
+                "Invalid belief_price. Check the input values.",
+            ))
+        })?);
 
         let spread_amount = expected_return.saturating_sub(return_amount);
 
@@ -171,7 +170,7 @@ pub fn get_share_in_assets(
         .iter()
         .map(|pool| AssetValidated {
             info: pool.info.clone(),
-            amount: pool.amount * share_ratio,
+            amount: pool.amount.mul_floor(share_ratio),
         })
         .collect()
 }

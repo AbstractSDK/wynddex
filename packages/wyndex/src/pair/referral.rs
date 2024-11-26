@@ -4,7 +4,7 @@ use crate::{
     querier::query_factory_config,
 };
 
-use cosmwasm_std::{Addr, CosmosMsg, Decimal, Decimal256, QuerierWrapper, Uint128, Uint256};
+use cosmwasm_std::{Addr, CosmosMsg, Decimal, Decimal256, QuerierWrapper, Uint128};
 
 use super::ContractError;
 
@@ -56,7 +56,7 @@ pub fn take_referral(
     }
 
     // subtract commission_amount from offer_asset
-    let commission_amount = offer_asset.amount * referral_commission;
+    let commission_amount = offer_asset.amount.mul_floor(referral_commission);
     offer_asset.amount -= commission_amount;
 
     Ok(commission_amount)
@@ -93,7 +93,7 @@ pub fn add_referral(
     let commission_amount = Decimal256::from_ratio(offer_asset.amount, 1u128) * referral_commission
         / (Decimal256::one() - referral_commission);
     // We can safely convert back to Uint128, because the commission amount is always less than the offer asset amount.
-    let commission_amount: Uint128 = (commission_amount * Uint256::one())
+    let commission_amount: Uint128 = (commission_amount.to_uint_floor())
         .try_into()
         .expect("commission_amount should fit into Uint128");
     // subtract commission_amount from offer_asset

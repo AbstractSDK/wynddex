@@ -11,7 +11,7 @@ repository = "https://github.com/cosmorama/wynddex"
 anyhow = "1"
 wyndex = { path = "./packages/wyndex", default-features = false }
 wynd-curve-utils = { git = "https://github.com/wynddao/wynddao.git", tag = "v1.6.0", package = "wynd-utils" }
-cw20-base = { version = "1.0", package = "cw20-base", features = ["library"] }
+cw20-base = { version = "2.0", package = "cw20-base", features = ["library"] }
 wyndex-factory = { path = "./contracts/factory" }
 cw-placeholder = { path = "./contracts/cw-placeholder" }
 wyndex-pair = { path = "./contracts/pair" }
@@ -22,15 +22,15 @@ wynd-lsd-hub = { git = "https://github.com/wynddao/wynd-lsd.git", version = "1.2
     "library",
 ] }
 lp-converter = { path = "./contracts/lp-converter", features = ["library"] }
-cosmwasm-schema = "1.1"
-cosmwasm-std = "1.1"
-cw2 = "1.0"
-cw20 = "1.0"
-semver                  = "1"
-cw-controllers = "1.0"
-cw-multi-test = "0.16"
-cw-storage-plus = "1.0"
-cw-utils = "1.0"
+cosmwasm-schema = "2.1"
+cosmwasm-std = "2.1"
+cw2 = "2.0"
+cw20 = "2.0"
+semver = "1"
+cw-controllers = "2.0"
+cw-multi-test = "2.0"
+cw-storage-plus = "2.0"
+cw-utils = "2.0"
 derivative = "2.2"
 itertools = "0.10"
 proptest = "1.0"

@@ -1,6 +1,6 @@
 mod factory_helper;
 
-use cosmwasm_std::{to_binary, Addr, Uint128};
+use cosmwasm_std::{to_json_binary, Addr, Uint128};
 use wyndex::asset::{Asset, AssetInfo};
 use wyndex::factory::{MigrateMsg, PairType, PartialStakeConfig};
 
@@ -134,7 +134,7 @@ fn migrate_factory_and_setup_deposit() {
             &Cw20ExecuteMsg::Send {
                 contract: helper.factory.to_string(),
                 amount: Uint128::new(1_000),
-                msg: to_binary(&wyndex::factory::ExecuteMsg::CreatePair {
+                msg: to_json_binary(&wyndex::factory::ExecuteMsg::CreatePair {
                     pair_type: PairType::Xyk {},
                     asset_infos: vec![
                         AssetInfo::Token(token_instance1.to_string()),
@@ -162,7 +162,7 @@ fn migrate_factory_and_setup_deposit() {
             &Cw20ExecuteMsg::Send {
                 contract: helper.factory.to_string(),
                 amount: Uint128::new(1_000_001),
-                msg: to_binary(&wyndex::factory::ExecuteMsg::CreatePair {
+                msg: to_json_binary(&wyndex::factory::ExecuteMsg::CreatePair {
                     pair_type: PairType::Xyk {},
                     asset_infos: vec![
                         AssetInfo::Token(token_instance1.to_string()),
@@ -189,7 +189,7 @@ fn migrate_factory_and_setup_deposit() {
         &Cw20ExecuteMsg::Send {
             contract: helper.factory.to_string(),
             amount: Uint128::new(1_000_000),
-            msg: to_binary(&wyndex::factory::ExecuteMsg::CreatePair {
+            msg: to_json_binary(&wyndex::factory::ExecuteMsg::CreatePair {
                 pair_type: PairType::Xyk {},
                 asset_infos: vec![
                     AssetInfo::Token(token_instance1.to_string()),
